@@ -27,8 +27,7 @@ public class Administrator extends User {
         System.out.println("1. Управление курсами");
         System.out.println("2. Управление пользователями");
         System.out.println("3. Мониторинг активности");
-        System.out.println("4. Анализ производительности платформы");
-        System.out.println("5. Выход из системы");
+        System.out.println("4. Выход из системы");
         System.out.print("Выберите опцию: ");
     }
 }

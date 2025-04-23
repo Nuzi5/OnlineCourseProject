@@ -50,11 +50,11 @@ public class Main {
 
         while (!isValidInput) {
             try {
-                System.out.println("\n=== ОБРАЗОВАТЕЛЬНАЯ ПЛАТФОРМА ===");
+                System.out.println("\n*** ОБРАЗОВАТЕЛЬНАЯ ПЛАТФОРМА ***");
                 System.out.println("1. Вход в систему");
-                System.out.println("2. Регистрация (студент)");
+                System.out.println("2. Регистрация (для студентов)");
                 System.out.println("3. Выход");
-                System.out.print("Выберите опцию: ");
+                System.out.print("Выберите опцию(1-3): ");
 
                 int choice = readIntInput();
                 scanner.nextLine();
@@ -72,10 +72,10 @@ public class Main {
                         exitSystem();
                         isValidInput = true;
                     }
-                    default -> System.out.println("Неверный выбор! Попробуйте снова.");
+                    default -> System.out.println("Неверный выбор! Попробуйте снова:");
                 }
             } catch (InputMismatchException e) {
-                System.out.println("Ошибка: введите число!");
+                System.out.println("Ошибка: Введите число!");
                 scanner.nextLine();
             } catch (Exception e) {
                 System.out.println("Произошла ошибка: " + e.getMessage());
@@ -118,8 +118,8 @@ public class Main {
     }
 
     private static void registerStudent() {
-        System.out.println("\n=== РЕГИСТРАЦИЯ СТУДЕНТА ===");
-        System.out.print("ФИО: ");
+        System.out.println("\n*** РЕГИСТРАЦИЯ СТУДЕНТА ***");
+        System.out.print("Ваше ФИО: ");
         String fullName = scanner.nextLine();
         System.out.print("Email: ");
         String email = scanner.nextLine();
