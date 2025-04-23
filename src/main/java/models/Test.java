@@ -1,5 +1,6 @@
 package models;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Test {
@@ -75,5 +76,9 @@ public class Test {
     }
 
     public void setQuestions(List<TestQuestion> testQuestions) {
+        List<TestQuestion> questions = new ArrayList<>(testQuestions);
+        for (TestQuestion question : questions) {
+            question.setTestId(this.id);
+        }
     }
 }

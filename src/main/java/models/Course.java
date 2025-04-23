@@ -7,10 +7,15 @@ public class Course {
     private final int createdBy;
     private final boolean isActive;
 
-
     public Course(int id, String title, String description, int createdBy, boolean isActive) {
+        if (title == null || title.trim().isEmpty()) {
+            throw new IllegalArgumentException("Title cannot be empty");
+        }
+        if (createdBy <= 0) {
+            throw new IllegalArgumentException("Invalid creator ID");
+        }
         this.id = id;
-        this.title = title;
+        this.title = title.trim();
         this.description = description;
         this.createdBy = createdBy;
         this.isActive = isActive;

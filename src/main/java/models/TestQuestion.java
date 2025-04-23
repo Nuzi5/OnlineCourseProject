@@ -5,7 +5,7 @@ import java.util.List;
 
 public class TestQuestion {
     private int id;
-    private final int testId;
+    private int testId;
     private final String questionText;
     private final String questionType;
     private final int points;
@@ -49,5 +49,9 @@ public class TestQuestion {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public void setTestId(int testId) {
+        this.testId = testId;
     }
 }

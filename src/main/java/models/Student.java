@@ -1,5 +1,7 @@
 package models;
 
+import java.util.Scanner;
+
 public class Student extends User {
 
     public Student(int id, String username, String password, String email, String fullName) {
