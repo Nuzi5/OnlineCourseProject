@@ -5,26 +5,10 @@ import models.Student;
 import models.User;
 import db.DatabaseSetup;
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class EnrollmentDAO {
-////    public boolean enrollStudent(int studentId, int courseId) {
-//        String sql = "INSERT INTO enrollments (user_id, course_id) VALUES (?, ?)";
-//
-//        try (Connection conn = DatabaseSetup.getConnection();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//
-//            pstmt.setInt(1, studentId);
-//            pstmt.setInt(2, courseId);
-//
-//            return pstmt.executeUpdate() > 0;
-//        } catch (SQLException e) {
-//            System.err.println("Error enrolling student: " + e.getMessage());
-//            return false;
-//        }
-//    }
 
     public boolean isCourseCompleted(int studentId, int courseId) {
         String sql = "SELECT completed_at FROM enrollments " +
@@ -44,22 +28,6 @@ public class EnrollmentDAO {
             return false;
         }
     }
-
-////    public boolean unenrollStudent(int studentId, int courseId) {
-//        String sql = "UPDATE enrollments SET is_active = FALSE WHERE user_id = ? AND course_id = ?";
-//
-//        try (Connection conn = DatabaseSetup.getConnection();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//
-//            pstmt.setInt(1, studentId);
-//            pstmt.setInt(2, courseId);
-//
-//            return pstmt.executeUpdate() > 0;
-//        } catch (SQLException e) {
-//            System.err.println("Error unenrolling student: " + e.getMessage());
-//            return false;
-//        }
-//    }
 
     public List<Course> getStudentCourses(int studentId) {
         List<Course> courses = new ArrayList<>();
@@ -115,63 +83,6 @@ public class EnrollmentDAO {
             System.err.println("Error getting course students: " + e.getMessage());
         }
         return students;
-    }
-
-////    public boolean markCourseCompleted(int studentId, int courseId) {
-//        String sql = "UPDATE enrollments SET completed_at = CURRENT_TIMESTAMP " +
-//                "WHERE user_id = ? AND course_id = ?";
-//
-//        try (Connection conn = DatabaseSetup.getConnection();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//
-//            pstmt.setInt(1, studentId);
-//            pstmt.setInt(2, courseId);
-//
-//            return pstmt.executeUpdate() > 0;
-//        } catch (SQLException e) {
-//            System.err.println("Error marking course as completed: " + e.getMessage());
-//            return false;
-//        }
-//    }
-
-////    public boolean isStudentEnrolled(int studentId, int courseId) {
-//        String sql = "SELECT 1 FROM enrollments " +
-//                "WHERE user_id = ? AND course_id = ? AND is_active = TRUE";
-//
-//        try (Connection conn = DatabaseSetup.getConnection();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//
-//            pstmt.setInt(1, studentId);
-//            pstmt.setInt(2, courseId);
-//
-//            try (ResultSet rs = pstmt.executeQuery()) {
-//                return rs.next();
-//            }
-//        } catch (SQLException e) {
-//            System.err.println("Error checking enrollment: " + e.getMessage());
-//            return false;
-//        }
-//    }
-
-    public LocalDateTime getLastActivityDate(int studentId, int courseId) {
-        String sql = "SELECT MAX(activity_date) FROM course_activity WHERE user_id = ? AND course_id = ?";
-
-        try (Connection conn = DatabaseSetup.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, studentId);
-            pstmt.setInt(2, courseId);
-
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    Timestamp timestamp = rs.getTimestamp(1);
-                    return timestamp != null ? timestamp.toLocalDateTime() : null;
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error getting last activity date: " + e.getMessage());
-        }
-        return null;
     }
 
     public int getActiveStudentsCount(int courseId) {

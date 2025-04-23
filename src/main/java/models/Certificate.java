@@ -3,11 +3,11 @@ package models;
 import java.time.LocalDateTime;
 
 public class Certificate {
-    private int id;
-    private int userId;
-    private int courseId;
-    private LocalDateTime issueDate;
-    private String certificateNumber;
+    private final int id;
+    private final int userId;
+    private final int courseId;
+    private final LocalDateTime issueDate;
+    private final String certificateNumber;
 
     public Certificate(int id, int userId, int courseId, LocalDateTime issueDate, String certificateNumber) {
         this.id = id;

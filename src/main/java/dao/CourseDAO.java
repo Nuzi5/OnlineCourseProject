@@ -91,22 +91,6 @@ public class CourseDAO {
         }
     }
 
-    public boolean deleteCourse(int id) {
-        String sql = "DELETE FROM courses WHERE id = ?";
-
-        try (Connection conn = DatabaseSetup.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, id);
-
-            int affectedRows = pstmt.executeUpdate();
-            return affectedRows > 0;
-        } catch (SQLException e) {
-            System.err.println("Ошибка при удалении курса: " + e.getMessage());
-            return false;
-        }
-    }
-
     public List<Course> getAllCourses() {
         List<Course> courses = new ArrayList<>();
         String sql = "SELECT * FROM courses";

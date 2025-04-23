@@ -27,23 +27,6 @@ public class CertificateDAO {
         }
     }
 
-    public boolean hasCertificate(int studentId, int courseId) {
-        String sql = "SELECT 1 FROM certificates WHERE user_id = ? AND course_id = ?";
-
-        try (Connection conn = DatabaseSetup.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, studentId);
-            pstmt.setInt(2, courseId);
-
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next(); // Возвращает true если есть хотя бы одна запись
-            }
-        } catch (SQLException e) {
-            System.err.println("Error checking certificate existence: " + e.getMessage());
-        }
-        return false;
-    }
     public List<Certificate> getUserCertificates(int userId) {
         List<Certificate> certificates = new ArrayList<>();
         String sql = "SELECT * FROM certificates WHERE user_id = ? ORDER BY issue_date DESC";

@@ -63,27 +63,6 @@ public class UserDAO {
         return null;
     }
 
-////    public User getUserByUsername(String username) {
-//        String sql = "SELECT * FROM users WHERE username = ?";
-//
-//        try (Connection conn = DatabaseSetup.getConnection();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//
-//            pstmt.setString(1, username);
-//
-//            try (ResultSet rs = pstmt.executeQuery()) {
-//                if (rs.next()) {
-//                    return createUserFromResultSet(rs);
-//                }
-//            }
-//        } catch (SQLException e) {
-//            System.err.println("Ошибка при получении пользователя: " + e.getMessage());
-//        }
-//
-//        return null;
-//    }
-
-
     public User authenticateUser(String username, String password) {
         String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
 
@@ -165,31 +144,6 @@ public class UserDAO {
         return users;
     }
 
-
-    public List<User> getUsersByRole(String role) {
-        List<User> users = new ArrayList<>();
-        String sql = "SELECT * FROM users WHERE role = ?";
-
-        try (Connection conn = DatabaseSetup.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, role);
-
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    User user = createUserFromResultSet(rs);
-                    if (user != null) {
-                        users.add(user);
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Ошибка при получении пользователей по роли: " + e.getMessage());
-        }
-
-        return users;
-    }
-
     private User createUserFromResultSet(ResultSet rs) throws SQLException {
         int id = rs.getInt("id");
         String username = rs.getString("username");
@@ -198,17 +152,12 @@ public class UserDAO {
         String fullName = rs.getString("full_name");
         String role = rs.getString("role");
 
-        switch (role) {
-            case "ADMIN":
-                return new Administrator(id, username, password, email, fullName);
-            case "TEACHER":
-                return new Teacher(id, username, password, email, fullName);
-            case "STUDENT":
-                return new Student(id, username, password, email, fullName);
-            case "MANAGER":
-                return new CourseManager(id, username, password, email, fullName);
-            default:
-                return null;
-        }
+        return switch (role) {
+            case "ADMIN" -> new Administrator(id, username, password, email, fullName);
+            case "TEACHER" -> new Teacher(id, username, password, email, fullName);
+            case "STUDENT" -> new Student(id, username, password, email, fullName);
+            case "MANAGER" -> new CourseManager(id, username, password, email, fullName);
+            default -> null;
+        };
     }
 }

@@ -317,26 +317,6 @@ public class TestDAO {
         }
     }
 
-////    public Integer getStudentTestScore(int studentId, int testId) {
-//        String sql = "SELECT score FROM test_results WHERE student_id = ? AND test_id = ?";
-//
-//        try (Connection conn = DatabaseSetup.getConnection();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//
-//            pstmt.setInt(1, studentId);
-//            pstmt.setInt(2, testId);
-//
-//            try (ResultSet rs = pstmt.executeQuery()) {
-//                if (rs.next()) {
-//                    return rs.getInt("score");
-//                }
-//            }
-//        } catch (SQLException e) {
-//            System.err.println("Error getting test score: " + e.getMessage());
-//        }
-//        return null;
-//    }
-
     public TestResult getStudentResult(int studentId, int testId) {
         String sql = "SELECT * FROM test_results WHERE student_id = ? AND test_id = ?";
 

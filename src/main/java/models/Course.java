@@ -4,8 +4,8 @@ public class Course {
     private int id;
     private String title;
     private String description;
-    private int createdBy;
-    private boolean isActive;
+    private final int createdBy;
+    private final boolean isActive;
 
 
     public Course(int id, String title, String description, int createdBy, boolean isActive) {
@@ -51,15 +51,7 @@ public class Course {
         return createdBy;
     }
 
-    public void setCreatedBy(int createdBy) {
-        this.createdBy = createdBy;
-    }
-
     public boolean isActive() {
         return isActive;
-    }
-
-    public void setActive(boolean active) {
-        isActive = active;
     }
 }

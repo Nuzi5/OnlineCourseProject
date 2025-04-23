@@ -2,9 +2,9 @@ package models;
 
 public class AnswerOption {
     private int id;
-    private int questionId;
-    private String optionText;
-    private boolean isCorrect;
+    private final int questionId;
+    private final String optionText;
+    private final boolean isCorrect;
 
     public AnswerOption(int id, int questionId, String optionText, boolean isCorrect) {
         this.id = id;
@@ -17,19 +17,7 @@ public class AnswerOption {
         this.id = id;
     }
 
-////    public void setCorrect(boolean correct) {
-//        isCorrect = correct;
-//    }
-
-////    public void setOptionText(String optionText) {
-//        this.optionText = optionText;
-//    }
-
-////    public void setQuestionId(int questionId) {
-//        this.questionId = questionId;
-//    }
-
-    public int getId() { return id; }
+    public int getId() {return id; }
     public int getQuestionId() { return questionId; }
     public String getOptionText() { return optionText; }
     public boolean isCorrect() { return isCorrect; }

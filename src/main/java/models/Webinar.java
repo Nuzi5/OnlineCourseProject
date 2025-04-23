@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 public class Webinar {
     private int id;
     private int courseId;
-    private int course;
+    public final int course;
     private String title;
     private String description;
     private final LocalDateTime scheduledAt;
@@ -21,14 +21,6 @@ public class Webinar {
         this.scheduledAt = scheduledAt;
         this.teacherId = teacherId;
         this.wasConducted = wasConducted;
-    }
-
-    public int getCourse() {
-        return course;
-    }
-
-    public void setCourse(int course) {
-        this.course = course;
     }
 
     public boolean isWasConducted() {

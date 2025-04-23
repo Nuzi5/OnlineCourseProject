@@ -130,21 +130,6 @@ public class AssignmentDAO {
         return null;
     }
 
-////    public boolean deleteAssignment(int assignmentId) {
-//        String sql = "DELETE FROM assignments WHERE id = ?";
-//
-//        try (Connection conn = DatabaseSetup.getConnection();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//
-//            pstmt.setInt(1, assignmentId);
-//            return pstmt.executeUpdate() > 0;
-//        } catch (SQLException e) {
-//            System.err.println("Error deleting assignment: " + e.getMessage());
-//            return false;
-//        }
-//    }
-
-
     public List<AssignmentSubmission> getAssignmentSubmissions(int assignmentId) {
         List<AssignmentSubmission> submissions = new ArrayList<>();
         String sql = "SELECT * FROM assignment_submissions WHERE assignment_id = ?";

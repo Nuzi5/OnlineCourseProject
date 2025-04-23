@@ -24,16 +24,8 @@ public class Assignment {
         return maxScore;
     }
 
-    public void setMaxScore(int maxScore) {
-        this.maxScore = maxScore;
-    }
-
     public LocalDateTime getDeadline() {
         return deadline;
-    }
-
-    public void setDeadline(LocalDateTime deadline) {
-        this.deadline = deadline;
     }
 
     public String getDescription() {

@@ -36,20 +36,6 @@ public class WebinarDAO {
         }
     }
 
-////    public boolean deleteWebinar(int webinarId) {
-//        String sql = "DELETE FROM webinars WHERE id = ?";
-//
-//        try (Connection conn = DatabaseSetup.getConnection();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//
-//            pstmt.setInt(1, webinarId);
-//            return pstmt.executeUpdate() > 0;
-//        } catch (SQLException e) {
-//            System.err.println("Error deleting webinar: " + e.getMessage());
-//            return false;
-//        }
-//    }
-
     public boolean markAsConducted(int webinarId) {
         String sql = "UPDATE webinars SET was_conducted = true WHERE id = ?";
 

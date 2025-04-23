@@ -174,32 +174,7 @@ public class DatabaseSetup {
                 ")";
         executeStatement(stmt, sql, "Таблица certificates");
     }
-////    private static void createAssignmentTables(Statement stmt) throws SQLException {
-//        String assignmentsSql = "CREATE TABLE IF NOT EXISTS assignments (" +
-//                "id INT AUTO_INCREMENT PRIMARY KEY," +
-//                "course_id INT NOT NULL," +
-//                "title VARCHAR(100) NOT NULL," +
-//                "description TEXT," +
-//                "deadline TIMESTAMP," +
-//                "max_score INT NOT NULL," +
-//                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-//                "FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE" +
-//                ")";
-//        executeStatement(stmt, assignmentsSql, "Таблица assignments");
-//
-//        String submissionsSql = "CREATE TABLE IF NOT EXISTS assignment_submissions (" +
-//                "id INT AUTO_INCREMENT PRIMARY KEY," +
-//                "assignment_id INT NOT NULL," +
-//                "student_id INT NOT NULL," +
-//                "answer TEXT NOT NULL," +
-//                "submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-//                "score INT," +
-//                "feedback TEXT," +
-//                "FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE CASCADE," +
-//                "FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE" +
-//                ")";
-//        executeStatement(stmt, submissionsSql, "Таблица assignment_submissions");
-//    }
+
     private static void createCourseMaterialsTable(Statement stmt) throws SQLException {
         String sql = "CREATE TABLE IF NOT EXISTS course_materials (" +
                 "id INT AUTO_INCREMENT PRIMARY KEY," +

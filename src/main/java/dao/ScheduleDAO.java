@@ -36,64 +36,6 @@ public class ScheduleDAO {
         }
     }
 
-//    public List<ScheduleEvent> getCourseEvents(int courseId) {
-//        List<ScheduleEvent> events = new ArrayList<>();
-//        String sql = "SELECT * FROM schedule_events WHERE course_id = ? ORDER BY event_time";
-//
-//        try (Connection conn = DatabaseSetup.getConnection();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//
-//            pstmt.setInt(1, courseId);
-//            ResultSet rs = pstmt.executeQuery();
-//
-//            while (rs.next()) {
-//                ScheduleEvent event = new ScheduleEvent(
-//                        rs.getInt("id"),
-//                        rs.getInt("course_id"),
-//                        rs.getString("title"),
-//                        rs.getString("event_type"),
-//                        rs.getTimestamp("event_time").toLocalDateTime(),
-//                        rs.getInt("created_by")
-//                );
-//                events.add(event);
-//            }
-//        } catch (SQLException e) {
-//            System.err.println("Error getting course events: " + e.getMessage());
-//        }
-//        return events;
-//    }
-
-////    public boolean updateEvent(ScheduleEvent event) {
-//        String sql = "UPDATE schedule_events SET title = ?, event_type = ?, event_time = ? WHERE id = ?";
-//
-//        try (Connection conn = DatabaseSetup.getConnection();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//
-//            pstmt.setString(1, event.getTitle());
-//            pstmt.setString(2, event.getEventType());
-//            pstmt.setTimestamp(3, Timestamp.valueOf(event.getEventTime()));
-//            pstmt.setInt(4, event.getId());
-//
-//            return pstmt.executeUpdate() > 0;
-//        } catch (SQLException e) {
-//            System.err.println("Error updating schedule event: " + e.getMessage());
-//            return false;
-//        }
-//    }
-
-////    public boolean deleteEvent(int eventId) {
-//        String sql = "DELETE FROM schedule_events WHERE id = ?";
-//
-//        try (Connection conn = DatabaseSetup.getConnection();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//
-//            pstmt.setInt(1, eventId);
-//            return pstmt.executeUpdate() > 0;
-//        } catch (SQLException e) {
-//            System.err.println("Error deleting schedule event: " + e.getMessage());
-//            return false;
-//        }
-//    }
     public List<ScheduleEvent> getAllUpcomingEvents() {
         List<ScheduleEvent> events = new ArrayList<>();
         String sql = "SELECT * FROM schedule_events WHERE event_time >= NOW() ORDER BY event_time";

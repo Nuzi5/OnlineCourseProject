@@ -25,5 +25,9 @@ public class TestResult {
     public int getScore() { 
         return score; 
     }
+
+    public int getStudentId() {
+        return studentId;
+    }
 }
     
