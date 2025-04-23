@@ -41,40 +41,6 @@ public class TestDAO {
         }
     }
 
-////    public boolean updateTest(Test test) {
-//        String sql = "UPDATE tests SET title = ?, description = ?, time_limit = ?, passing_score = ? " +
-//                "WHERE id = ?";
-//
-//        try (Connection conn = DatabaseSetup.getConnection();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//
-//            pstmt.setString(1, test.getTitle());
-//            pstmt.setString(2, test.getDescription());
-//            pstmt.setInt(3, test.getTimeLimit());
-//            pstmt.setInt(4, test.getPassingScore());
-//            pstmt.setInt(5, test.getId());
-//
-//            return pstmt.executeUpdate() > 0;
-//        } catch (SQLException e) {
-//            System.err.println("Error updating test: " + e.getMessage());
-//            return false;
-//        }
-//    }
-
-////    public boolean deleteTest(int testId) {
-//        String sql = "DELETE FROM tests WHERE id = ?";
-//
-//        try (Connection conn = DatabaseSetup.getConnection();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//
-//            pstmt.setInt(1, testId);
-//            return pstmt.executeUpdate() > 0;
-//        } catch (SQLException e) {
-//            System.err.println("Error deleting test: " + e.getMessage());
-//            return false;
-//        }
-//    }
-
     public Test getTestById(int testId) {
         String sql = "SELECT * FROM tests WHERE id = ?";
 
@@ -155,39 +121,6 @@ public class TestDAO {
         }
     }
 
-////    public boolean updateQuestion(TestQuestion question) {
-//        String sql = "UPDATE test_questions SET question = ?, question_type = ?, points = ? " +
-//                "WHERE id = ?";
-//
-//        try (Connection conn = DatabaseSetup.getConnection();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//
-//            pstmt.setString(1, question.getQuestionText());
-//            pstmt.setString(2, question.getQuestionType());
-//            pstmt.setInt(3, question.getPoints());
-//            pstmt.setInt(4, question.getId());
-//
-//            return pstmt.executeUpdate() > 0;
-//        } catch (SQLException e) {
-//            System.err.println("Error updating question: " + e.getMessage());
-//            return false;
-//        }
-//    }
-
-////    public boolean deleteQuestion(int questionId) {
-//        String sql = "DELETE FROM test_questions WHERE id = ?";
-//
-//        try (Connection conn = DatabaseSetup.getConnection();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//
-//            pstmt.setInt(1, questionId);
-//            return pstmt.executeUpdate() > 0;
-//        } catch (SQLException e) {
-//            System.err.println("Error deleting question: " + e.getMessage());
-//            return false;
-//        }
-//    }
-
     public List<TestQuestion> getTestQuestions(int testId) {
         List<TestQuestion> questions = new ArrayList<>();
         String sql = "SELECT * FROM test_questions WHERE test_id = ?";
@@ -241,38 +174,6 @@ public class TestDAO {
             return false;
         }
     }
-
-////    public boolean updateAnswerOption(AnswerOption option) {
-//        String sql = "UPDATE answer_options SET option_text = ?, is_correct = ? " +
-//                "WHERE id = ?";
-//
-//        try (Connection conn = DatabaseSetup.getConnection();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//
-//            pstmt.setString(1, option.getOptionText());
-//            pstmt.setBoolean(2, option.isCorrect());
-//            pstmt.setInt(3, option.getId());
-//
-//            return pstmt.executeUpdate() > 0;
-//        } catch (SQLException e) {
-//            System.err.println("Error updating answer option: " + e.getMessage());
-//            return false;
-//        }
-//    }
-
-////    public boolean deleteAnswerOption(int optionId) {
-//        String sql = "DELETE FROM answer_options WHERE id = ?";
-//
-//        try (Connection conn = DatabaseSetup.getConnection();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//
-//            pstmt.setInt(1, optionId);
-//            return pstmt.executeUpdate() > 0;
-//        } catch (SQLException e) {
-//            System.err.println("Error deleting answer option: " + e.getMessage());
-//            return false;
-//        }
-//    }
 
     public List<AnswerOption> getAnswerOptions(int questionId) {
         List<AnswerOption> options = new ArrayList<>();
