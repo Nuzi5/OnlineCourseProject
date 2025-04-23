@@ -7,7 +7,7 @@ import java.sql.Statement;
 
 public class DatabaseSetup {
     private static final String URL = "jdbc:mysql://localhost:3306/education_platform";
-    private static final String USER = "root"; // Стандартное имя пользователя MySQL
+    private static final String USER = "root";
     private static final String PASSWORD = "Nurzat211125";
 
     public static Connection getConnection() throws SQLException {
@@ -15,167 +15,227 @@ public class DatabaseSetup {
     }
 
     public static void initDatabase() {
+        Connection conn = null;
+        Statement stmt = null;
+
         try {
-            // Регистрация драйвера MySQL - это рекомендуется, хотя в новых версиях Java необязательно
             Class.forName("com.mysql.cj.jdbc.Driver");
 
-            try (Connection conn = getConnection();
-                 Statement stmt = conn.createStatement()) {
+            conn = getConnection();
+            stmt = conn.createStatement();
 
-                // Создание таблицы пользователей
-                stmt.execute("CREATE TABLE IF NOT EXISTS users (" +
-                        "id INT AUTO_INCREMENT PRIMARY KEY," +
-                        "username VARCHAR(50) UNIQUE NOT NULL," +
-                        "password VARCHAR(255) NOT NULL," +
-                        "email VARCHAR(100) UNIQUE NOT NULL," +
-                        "full_name VARCHAR(1)00) NOT NULL," +
-                        "role VARCHAR(20) NOT NULL," +
-                        "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
-                        ")");
+            createUserTable(stmt);
+            createCourseTable(stmt);
 
-                // Создание таблицы курсов
-                stmt.execute("CREATE TABLE IF NOT EXISTS courses (" +
-                        "id INT AUTO_INCREMENT PRIMARY KEY," +
-                        "title VARCHAR(100) NOT NULL," +
-                        "description TEXT," +
-                        "created_by INT," +
-                        "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-                        "is_active BOOLEAN DEFAULT TRUE," +
-                        "FOREIGN KEY (created_by) REFERENCES users(id)" +
-                        ")");
+            createEnrollmentTable(stmt);
+            createAssignmentTable(stmt);
+            createTestTables(stmt);
+            createWebinarTable(stmt);
+            createCertificateTable(stmt);
 
-                // Создание таблицы материалов курса
-                stmt.execute("CREATE TABLE IF NOT EXISTS course_materials (" +
-                        "id INT AUTO_INCREMENT PRIMARY KEY," +
-                        "course_id INT," +
-                        "title VARCHAR(100) NOT NULL," +
-                        "content TEXT," +
-                        "material_type VARCHAR(20) NOT NULL," +
-                        "created_by INT," +
-                        "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-                        "FOREIGN KEY (course_id) REFERENCES courses(id)," +
-                        "FOREIGN KEY (created_by) REFERENCES users(id)" +
-                        ")");
+            createCourseMaterialsTable(stmt);
+            createScheduleEventsTable(stmt);
 
-                // Создание таблицы заданий
-                stmt.execute("CREATE TABLE IF NOT EXISTS assignments (" +
-                        "id INT AUTO_INCREMENT PRIMARY KEY," +
-                        "course_id INT," +
-                        "title VARCHAR(100) NOT NULL," +
-                        "description TEXT," +
-                        "deadline TIMESTAMP," +
-                        "max_score INT," +
-                        "created_by INT," +
-                        "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-                        "FOREIGN KEY (course_id) REFERENCES courses(id)," +
-                        "FOREIGN KEY (created_by) REFERENCES users(id)" +
-                        ")");
+            System.out.println("База данных успешно инициализирована.");
 
-                // Создание таблицы тестов
-                stmt.execute("CREATE TABLE IF NOT EXISTS tests (" +
-                        "id INT AUTO_INCREMENT PRIMARY KEY," +
-                        "course_id INT," +
-                        "title VARCHAR(100) NOT NULL," +
-                        "description TEXT," +
-                        "time_limit INT," +
-                        "passing_score INT," +
-                        "created_by INT," +
-                        "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-                        "FOREIGN KEY (course_id) REFERENCES courses(id)," +
-                        "FOREIGN KEY (created_by) REFERENCES users(id)" +
-                        ")");
-
-                // Создание таблицы вопросов теста
-                stmt.execute("CREATE TABLE IF NOT EXISTS test_questions (" +
-                        "id INT AUTO_INCREMENT PRIMARY KEY," +
-                        "test_id INT," +
-                        "question TEXT NOT NULL," +
-                        "question_type VARCHAR(20) NOT NULL," +
-                        "points INT DEFAULT 1," +
-                        "FOREIGN KEY (test_id) REFERENCES tests(id)" +
-                        ")");
-
-                // Создание таблицы вариантов ответов
-                stmt.execute("CREATE TABLE IF NOT EXISTS answer_options (" +
-                        "id INT AUTO_INCREMENT PRIMARY KEY," +
-                        "question_id INT," +
-                        "option_text TEXT NOT NULL," +
-                        "is_correct BOOLEAN DEFAULT FALSE," +
-                        "FOREIGN KEY (question_id) REFERENCES test_questions(id)" +
-                        ")");
-
-                // Создание таблицы записи на курсы
-                stmt.execute("CREATE TABLE IF NOT EXISTS enrollments (" +
-                        "id INT AUTO_INCREMENT PRIMARY KEY," +
-                        "user_id INT," +
-                        "course_id INT," +
-                        "enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-                        "completed_at TIMESTAMP," +
-                        "is_active BOOLEAN DEFAULT TRUE," +
-                        "UNIQUE (user_id, course_id)," +
-                        "FOREIGN KEY (user_id) REFERENCES users(id)," +
-                        "FOREIGN KEY (course_id) REFERENCES courses(id)" +
-                        ")");
-
-                // Создание таблицы успеваемости студентов
-                stmt.execute("CREATE TABLE IF NOT EXISTS student_progress (" +
-                        "id INT AUTO_INCREMENT PRIMARY KEY," +
-                        "enrollment_id INT," +
-                        "material_id INT," +
-                        "material_type VARCHAR(20)," +
-                        "status VARCHAR(20) DEFAULT 'not_started'," +
-                        "score INT," +
-                        "completed_at TIMESTAMP," +
-                        "feedback TEXT," +
-                        "FOREIGN KEY (enrollment_id) REFERENCES enrollments(id)" +
-                        ")");
-
-                // Создание таблицы вебинаров
-                stmt.execute("CREATE TABLE IF NOT EXISTS webinars (" +
-                        "id INT AUTO_INCREMENT PRIMARY KEY," +
-                        "course_id INT," +
-                        "title VARCHAR(100) NOT NULL," +
-                        "description TEXT," +
-                        "scheduled_at TIMESTAMP NOT NULL," +
-                        "teacher_id INT," +
-                        "was_conducted BOOLEAN DEFAULT FALSE," +
-                        "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-                        "FOREIGN KEY (course_id) REFERENCES courses(id)," +
-                        "FOREIGN KEY (teacher_id) REFERENCES users(id)" +
-                        ")");
-
-                // Создание таблицы расписания
-                stmt.execute("CREATE TABLE IF NOT EXISTS schedule (" +
-                        "id INT AUTO_INCREMENT PRIMARY KEY," +
-                        "course_id INT," +
-                        "event_title VARCHAR(100) NOT NULL," +
-                        "event_type VARCHAR(20) NOT NULL," +
-                        "event_date TIMESTAMP NOT NULL," +
-                        "created_by INT," +
-                        "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-                        "FOREIGN KEY (course_id) REFERENCES courses(id)," +
-                        "FOREIGN KEY (created_by) REFERENCES users(id)" +
-                        ")");
-
-                // Создание таблицы сертификатов
-                stmt.execute("CREATE TABLE IF NOT EXISTS certificates (" +
-                        "id INT AUTO_INCREMENT PRIMARY KEY," +
-                        "user_id INT," +
-                        "course_id INT," +
-                        "issue_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-                        "certificate_number VARCHAR(50) UNIQUE NOT NULL," +
-                        "FOREIGN KEY (user_id) REFERENCES users(id)," +
-                        "FOREIGN KEY (course_id) REFERENCES courses(id)" +
-                        ")");
-
-                System.out.println("База данных успешно инициализирована.");
-            }
-        } catch (SQLException e) {
-            System.err.println("Ошибка при инициализации базы данных: " + e.getMessage());
-            e.printStackTrace();
         } catch (ClassNotFoundException e) {
-            System.err.println("Драйвер MySQL не найден: " + e.getMessage());
+            System.err.println("Ошибка: MySQL драйвер не найден.");
             e.printStackTrace();
+        } catch (SQLException e) {
+            System.err.println("Ошибка при работе с базой данных:");
+            e.printStackTrace();
+        } finally {
+            try {
+                if (stmt != null) stmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                System.err.println("Ошибка при закрытии соединения:");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static void createUserTable(Statement stmt) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS users (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "username VARCHAR(50) UNIQUE NOT NULL," +
+                "password VARCHAR(255) NOT NULL," +
+                "email VARCHAR(100) UNIQUE NOT NULL," +
+                "full_name VARCHAR(100) NOT NULL," +
+                "role VARCHAR(20) NOT NULL CHECK (role IN ('ADMIN', 'TEACHER', 'STUDENT', 'MANAGER'))," +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                ")";
+        executeStatement(stmt, sql, "Таблица users");
+    }
+
+    private static void createCourseTable(Statement stmt) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS courses (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "title VARCHAR(100) NOT NULL," +
+                "description TEXT," +
+                "created_by INT," +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                "is_active BOOLEAN DEFAULT TRUE," +
+                "FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL" +
+                ")";
+        executeStatement(stmt, sql, "Таблица courses");
+    }
+
+    private static void createTestTables(Statement stmt) throws SQLException {
+        String testsSql = "CREATE TABLE IF NOT EXISTS tests (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "course_id INT NOT NULL," +
+                "title VARCHAR(100) NOT NULL," +
+                "description TEXT," +
+                "time_limit INT," +
+                "passing_score INT," +
+                "created_by INT," +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                "FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE," +
+                "FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL" +
+                ")";
+        executeStatement(stmt, testsSql, "Таблица tests");
+
+        String questionsSql = "CREATE TABLE IF NOT EXISTS test_questions (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "test_id INT NOT NULL," +
+                "question TEXT NOT NULL," +
+                "question_type VARCHAR(20) NOT NULL CHECK (question_type IN ('single_choice', 'multiple_choice', 'text_answer'))," +
+                "points INT DEFAULT 1," +
+                "FOREIGN KEY (test_id) REFERENCES tests(id) ON DELETE CASCADE" +
+                ")";
+        executeStatement(stmt, questionsSql, "Таблица test_questions");
+
+        String optionsSql = "CREATE TABLE IF NOT EXISTS answer_options (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "question_id INT NOT NULL," +
+                "option_text TEXT NOT NULL," +
+                "is_correct BOOLEAN DEFAULT FALSE," +
+                "FOREIGN KEY (question_id) REFERENCES test_questions(id) ON DELETE CASCADE" +
+                ")";
+        executeStatement(stmt, optionsSql, "Таблица answer_options");
+    }
+
+    private static void createEnrollmentTable(Statement stmt) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS enrollments (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "user_id INT NOT NULL," +
+                "course_id INT NOT NULL," +
+                "enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                "completed_at TIMESTAMP NULL," +
+                "is_active BOOLEAN DEFAULT TRUE," +
+                "progress INT DEFAULT 0," +
+                "UNIQUE (user_id, course_id)," +
+                "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE," +
+                "FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE" +
+                ")";
+        executeStatement(stmt, sql, "Таблица enrollments");
+    }
+
+    private static void createAssignmentTable(Statement stmt) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS assignments (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "course_id INT NOT NULL," +
+                "title VARCHAR(100) NOT NULL," +
+                "description TEXT," +
+                "deadline TIMESTAMP," +
+                "max_score INT," +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                "FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE" +
+                ")";
+        executeStatement(stmt, sql, "Таблица assignments");
+    }
+
+    private static void createWebinarTable(Statement stmt) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS webinars (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "course_id INT NOT NULL," +
+                "title VARCHAR(100) NOT NULL," +
+                "description TEXT," +
+                "scheduled_at TIMESTAMP NOT NULL," +
+                "teacher_id INT NOT NULL," +
+                "was_conducted BOOLEAN DEFAULT FALSE," +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                "FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE," +
+                "FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE" +
+                ")";
+        executeStatement(stmt, sql, "Таблица webinars");
+    }
+
+    private static void createCertificateTable(Statement stmt) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS certificates (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "user_id INT NOT NULL," +
+                "course_id INT NOT NULL," +
+                "certificate_number VARCHAR(50) NOT NULL," +
+                "issue_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE," +
+                "FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE" +
+                ")";
+        executeStatement(stmt, sql, "Таблица certificates");
+    }
+////    private static void createAssignmentTables(Statement stmt) throws SQLException {
+//        String assignmentsSql = "CREATE TABLE IF NOT EXISTS assignments (" +
+//                "id INT AUTO_INCREMENT PRIMARY KEY," +
+//                "course_id INT NOT NULL," +
+//                "title VARCHAR(100) NOT NULL," +
+//                "description TEXT," +
+//                "deadline TIMESTAMP," +
+//                "max_score INT NOT NULL," +
+//                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+//                "FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE" +
+//                ")";
+//        executeStatement(stmt, assignmentsSql, "Таблица assignments");
+//
+//        String submissionsSql = "CREATE TABLE IF NOT EXISTS assignment_submissions (" +
+//                "id INT AUTO_INCREMENT PRIMARY KEY," +
+//                "assignment_id INT NOT NULL," +
+//                "student_id INT NOT NULL," +
+//                "answer TEXT NOT NULL," +
+//                "submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+//                "score INT," +
+//                "feedback TEXT," +
+//                "FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE CASCADE," +
+//                "FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE" +
+//                ")";
+//        executeStatement(stmt, submissionsSql, "Таблица assignment_submissions");
+//    }
+    private static void createCourseMaterialsTable(Statement stmt) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS course_materials (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "course_id INT NOT NULL," +
+                "title VARCHAR(100) NOT NULL," +
+                "content TEXT," +
+                "material_type VARCHAR(20) NOT NULL," +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                "FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE" +
+                ")";
+        executeStatement(stmt, sql, "Таблица course_materials");
+    }
+
+    private static void createScheduleEventsTable(Statement stmt) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS schedule_events (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "course_id INT NOT NULL," +
+                "title VARCHAR(100) NOT NULL," +
+                "event_type VARCHAR(20) NOT NULL," +
+                "event_time TIMESTAMP NOT NULL," +
+                "created_by INT NOT NULL," +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                "FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE," +
+                "FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE" +
+                ")";
+        executeStatement(stmt, sql, "Таблица schedule_events");
+    }
+
+    private static void executeStatement(Statement stmt, String sql, String tableName) throws SQLException {
+        try {
+            stmt.execute(sql);
+            System.out.println(tableName + " создана/проверена");
+        } catch (SQLException e) {
+            System.err.println("Ошибка при создании таблицы " + tableName);
+            System.err.println("SQL: " + sql);
+            throw e;
         }
     }
 }

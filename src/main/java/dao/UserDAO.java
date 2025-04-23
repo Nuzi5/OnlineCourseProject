@@ -63,25 +63,25 @@ public class UserDAO {
         return null;
     }
 
-    public User getUserByUsername(String username) {
-        String sql = "SELECT * FROM users WHERE username = ?";
-
-        try (Connection conn = DatabaseSetup.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, username);
-
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return createUserFromResultSet(rs);
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Ошибка при получении пользователя: " + e.getMessage());
-        }
-
-        return null;
-    }
+////    public User getUserByUsername(String username) {
+//        String sql = "SELECT * FROM users WHERE username = ?";
+//
+//        try (Connection conn = DatabaseSetup.getConnection();
+//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+//
+//            pstmt.setString(1, username);
+//
+//            try (ResultSet rs = pstmt.executeQuery()) {
+//                if (rs.next()) {
+//                    return createUserFromResultSet(rs);
+//                }
+//            }
+//        } catch (SQLException e) {
+//            System.err.println("Ошибка при получении пользователя: " + e.getMessage());
+//        }
+//
+//        return null;
+//    }
 
 
     public User authenticateUser(String username, String password) {
@@ -190,7 +190,6 @@ public class UserDAO {
         return users;
     }
 
-    // Вспомогательный метод для создания объекта пользователя из ResultSet
     private User createUserFromResultSet(ResultSet rs) throws SQLException {
         int id = rs.getInt("id");
         String username = rs.getString("username");

@@ -30,7 +30,6 @@ public abstract class User {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Геттеры и сеттеры
     public int getId() {
         return id;
     }
@@ -43,16 +42,8 @@ public abstract class User {
         return username;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
     public String getPassword() {
         return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public String getEmail() {
@@ -75,25 +66,7 @@ public abstract class User {
         return role;
     }
 
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-
     public abstract void showMenu();
-
-
-    public boolean authenticate(String inputPassword) {
-        return this.password.equals(inputPassword);
-    }
 
     @Override
     public String toString() {

@@ -16,7 +16,6 @@ public class Course {
         this.isActive = isActive;
     }
 
-    // Конструктор без id (для создания нового курса)
     public Course(String title, String description, int createdBy, boolean isActive) {
         this.title = title;
         this.description = description;

@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CourseDAO {
-
-
     public boolean createCourse(Course course) {
         String sql = "INSERT INTO courses (title, description, created_by, is_active) VALUES (?, ?, ?, ?)";
 
@@ -38,6 +36,21 @@ public class CourseDAO {
         }
     }
 
+    public boolean deactivateCourse(int courseId) {
+        String sql = "UPDATE courses SET is_active = false WHERE id = ?";
+
+        try (Connection conn = DatabaseSetup.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, courseId);
+
+            int affectedRows = pstmt.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            System.err.println("Ошибка при деактивации курса: " + e.getMessage());
+            return false;
+        }
+    }
 
     public Course getCourseById(int id) {
         String sql = "SELECT * FROM courses WHERE id = ?";
@@ -59,7 +72,6 @@ public class CourseDAO {
         return null;
     }
 
-
     public boolean updateCourse(Course course) {
         String sql = "UPDATE courses SET title = ?, description = ?, is_active = ? WHERE id = ?";
 
@@ -79,7 +91,6 @@ public class CourseDAO {
         }
     }
 
-
     public boolean deleteCourse(int id) {
         String sql = "DELETE FROM courses WHERE id = ?";
 
@@ -95,7 +106,6 @@ public class CourseDAO {
             return false;
         }
     }
-
 
     public List<Course> getAllCourses() {
         List<Course> courses = new ArrayList<>();
@@ -116,7 +126,6 @@ public class CourseDAO {
         return courses;
     }
 
-
     public List<Course> getActiveCourses() {
         List<Course> courses = new ArrayList<>();
         String sql = "SELECT * FROM courses WHERE is_active = true";
@@ -136,8 +145,7 @@ public class CourseDAO {
         return courses;
     }
 
-
-    public List<Course> getCoursesByCreator(int creatorId) {
+    public List<Course> getCoursesByTeacher(int creatorId) {
         List<Course> courses = new ArrayList<>();
         String sql = "SELECT * FROM courses WHERE created_by = ?";
 
@@ -159,7 +167,6 @@ public class CourseDAO {
         return courses;
     }
 
-    // Вспомогательный метод для создания объекта Course из ResultSet
     private Course createCourseFromResultSet(ResultSet rs) throws SQLException {
         int id = rs.getInt("id");
         String title = rs.getString("title");

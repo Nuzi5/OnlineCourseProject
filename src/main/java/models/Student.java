@@ -22,34 +22,5 @@ public class Student extends User {
         System.out.println("7. Выход из системы");
         System.out.print("Выберите опцию: ");
     }
-
-    public void enrollInCourse(int courseId) {
-
-    }
-
-    public void viewCourseDetails(int courseId) {
-
-    }
-
-    public void viewCourseMaterial(int materialId) {
-
-    }
-
-    public void submitAssignment(int assignmentId, String answer) {
-
-    }
-
-    public void takeTest(int testId) {
-
-    }
-
-    public void viewProgress() {
-
-    }
-
-    public void viewCertificates() {
-        // Логика просмотра полученных сертификатов
-    }
 }
-
 

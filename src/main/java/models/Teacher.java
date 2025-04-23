@@ -22,36 +22,4 @@ public class Teacher extends User {
         System.out.println("7. Выход из системы");
         System.out.print("Выберите опцию: ");
     }
-
-    public void createCourseMaterial(int courseId) {
-        // Логика создания учебного материала
-    }
-
-    public void editCourseMaterial(int materialId) {
-        // Логика редактирования учебного материала
-    }
-
-    public void createAssignment(int courseId) {
-        // Логика создания задания
-    }
-
-    public void createTest(int courseId) {
-        // Логика создания теста
-    }
-
-    public void gradeAssignment(int assignmentId, int studentId, int score, String feedback) {
-
-    }
-
-    public void createWebinar(int courseId) {
-
-    }
-
-    public void markWebinarConducted(int webinarId) {
-
-    }
-
-    public void viewStudentProgress(int courseId) {
-
-    }
 }
