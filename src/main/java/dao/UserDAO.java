@@ -15,73 +15,55 @@ import db.DatabaseSetup;
 public class UserDAO {
 
     public boolean createUser(User user) {
-        String sql = "INSERT INTO users (username, password, email, full_name, role) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO users (id, username, password, email, full_name, role) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseSetup.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, user.getUsername());
-            pstmt.setString(2, user.getPassword());
-            pstmt.setString(3, user.getEmail());
-            pstmt.setString(4, user.getFullName());
-            pstmt.setString(5, user.getRole());
+            stmt.setInt(1, user.getId());
+            stmt.setString(2, user.getUsername());
+            stmt.setString(3, user.getPassword());
+            stmt.setString(4, user.getEmail());
+            stmt.setString(5, user.getFullName());
+            stmt.setString(6, user.getRole());
 
-            int affectedRows = pstmt.executeUpdate();
-
-            if (affectedRows > 0) {
-                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        user.setId(generatedKeys.getInt(1));
-                        return true;
-                    }
-                }
-            }
-            return false;
+            return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Ошибка при создании пользователя: " + e.getMessage());
+            System.err.println("Ошибка создания пользователя: " + e.getMessage());
             return false;
         }
     }
 
-    public User getUserById(int id) {
+    public User getUserById(int userId) {
         String sql = "SELECT * FROM users WHERE id = ?";
 
         try (Connection conn = DatabaseSetup.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            pstmt.setInt(1, id);
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next() ? createUserFromResultSet(rs) : null;
 
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return createUserFromResultSet(rs);
-                }
-            }
         } catch (SQLException e) {
-            System.err.println("Ошибка при получении пользователя: " + e.getMessage());
+            throw new RuntimeException("Error getting user", e);
         }
-
-        return null;
     }
 
     public User authenticateUser(String username, String password) {
         String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
 
         try (Connection conn = DatabaseSetup.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, username);
-            pstmt.setString(2, password);
+            stmt.setString(1, username);
+            stmt.setString(2, password);
 
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return createUserFromResultSet(rs);
-                }
-            }
+            ResultSet rs = stmt.executeQuery();
+            return rs.next() ? createUserFromResultSet(rs) : null;
+
         } catch (SQLException e) {
-            System.err.println("Ошибка при аутентификации пользователя: " + e.getMessage());
+            throw new RuntimeException("Authentication error", e);
         }
-
-        return null;
     }
 
 
@@ -124,24 +106,21 @@ public class UserDAO {
     }
 
     public List<User> getAllUsers() {
-        List<User> users = new ArrayList<>();
         String sql = "SELECT * FROM users";
+        List<User> users = new ArrayList<>();
 
         try (Connection conn = DatabaseSetup.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                User user = createUserFromResultSet(rs);
-                if (user != null) {
-                    users.add(user);
-                }
+                users.add(createUserFromResultSet(rs));
             }
-        } catch (SQLException e) {
-            System.err.println("Ошибка при получении списка пользователей: " + e.getMessage());
-        }
+            return users;
 
-        return users;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error getting users", e);
+        }
     }
 
     private User createUserFromResultSet(ResultSet rs) throws SQLException {
@@ -152,12 +131,23 @@ public class UserDAO {
         String fullName = rs.getString("full_name");
         String role = rs.getString("role");
 
+        Connection connection = DatabaseSetup.getConnection();
+
         return switch (role) {
-            case "ADMIN" -> new Administrator(id, username, password, email, fullName);
-            case "TEACHER" -> new Teacher(id, username, password, email, fullName);
-            case "STUDENT" -> new Student(id, username, password, email, fullName);
-            case "MANAGER" -> new CourseManager(id, username, password, email, fullName);
-            default -> null;
+            case "ADMIN" -> new Administrator(id, username, password, email, fullName, connection);
+            case "TEACHER" -> new Teacher(id, username, password, email, fullName, connection);
+            case "STUDENT" -> new Student(id, username, password, email, fullName, connection);
+            case "MANAGER" -> new CourseManager(id, username, password, email, fullName, connection);
+            default -> throw new IllegalArgumentException("Unknown role: " + role);
         };
+    }
+
+    public int getNextUserId() throws SQLException {
+        String sql = "SELECT COALESCE(MAX(id), 0) + 1 FROM users";
+        try (Connection conn = DatabaseSetup.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            return rs.next() ? rs.getInt(1) : 1;
+        }
     }
 }

@@ -70,12 +70,14 @@ public class EnrollmentDAO {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
+                Connection connection = DatabaseSetup.getConnection();
                 User student = new Student(
                         rs.getInt("id"),
                         rs.getString("username"),
                         rs.getString("password"),
                         rs.getString("email"),
-                        rs.getString("full_name")
+                        rs.getString("full_name"),
+                        connection
                 );
                 students.add(student);
             }

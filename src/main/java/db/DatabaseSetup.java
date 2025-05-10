@@ -1,9 +1,6 @@
 package db;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 
 public class DatabaseSetup {
     private static final String URL = "jdbc:mysql://localhost:3306/education_platform";
@@ -12,7 +9,12 @@ public class DatabaseSetup {
     private static boolean silentMode = true;
 
     public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+        try {
+            return DriverManager.getConnection(URL, USER, PASSWORD);
+        } catch (SQLException e) {
+            System.err.println("Ошибка подключения к базе данных: " + e.getMessage());
+            throw e;
+        }
     }
 
     public static void initDatabase() {
@@ -33,12 +35,18 @@ public class DatabaseSetup {
             createCourseTable(stmt);
             createEnrollmentTable(stmt);
             createAssignmentTable(stmt);
+            createAssignmentSubmissionsTable(stmt);
             createTestTables(stmt);
+            createTestResultsTable(stmt);
             createWebinarTable(stmt);
             createCertificateTable(stmt);
             createCourseMaterialsTable(stmt);
             createScheduleEventsTable(stmt);
             createDefaultUsers(stmt);
+            createCourseTeachersTable(stmt);
+            createActivityLogsTable(stmt);
+
+            updateUserTable(stmt);
 
             if (!silentMode) {
                 System.out.println("База данных успешно инициализирована.");
@@ -240,4 +248,88 @@ public class DatabaseSetup {
             throw e;
         }
     }
+
+    private static void createAssignmentSubmissionsTable(Statement stmt) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS assignment_submissions (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "assignment_id INT NOT NULL," +
+                "student_id INT NOT NULL," +
+                "answer TEXT," +
+                "score INT," +
+                "graded_by INT," +
+                "graded_at TIMESTAMP NULL," +
+                "submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                "FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE CASCADE," +
+                "FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE," +
+                "FOREIGN KEY (graded_by) REFERENCES users(id) ON DELETE SET NULL," +
+                "UNIQUE KEY (assignment_id, student_id)" +
+                ")";
+        executeStatement(stmt, sql, "assignment_submissions");
+    }
+
+    private static void createTestResultsTable(Statement stmt) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS test_results (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "student_id INT NOT NULL," +
+                "test_id INT NOT NULL," +
+                "score INT NOT NULL," +
+                "passing_score INT NOT NULL," +
+                "completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                "FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE," +
+                "FOREIGN KEY (test_id) REFERENCES tests(id) ON DELETE CASCADE," +
+                "UNIQUE KEY (student_id, test_id)" +
+                ")";
+        executeStatement(stmt, sql, "test_results");
+    }
+
+    private static void createCourseTeachersTable(Statement stmt) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS course_teachers (" +
+                "course_id INT NOT NULL," +
+                "teacher_id INT NOT NULL," +
+                "assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                "PRIMARY KEY (course_id, teacher_id)," +
+                "FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE," +
+                "FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE" +
+                ")";
+        executeStatement(stmt, sql, "course_teachers");
+    }
+
+    private static void createActivityLogsTable(Statement stmt) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS activity_logs (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "user_id INT," +
+                "username VARCHAR(50)," +
+                "action VARCHAR(255) NOT NULL," +
+                "action_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL" +
+                ")";
+        executeStatement(stmt, sql, "activity_logs");
+    }
+
+    private static void updateUserTable(Statement stmt) throws SQLException {
+        ResultSet rs1 = stmt.executeQuery(
+                "SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS " +
+                        "WHERE TABLE_NAME = 'users' AND COLUMN_NAME = 'is_active'"
+        );
+        rs1.next();
+        if (rs1.getInt("cnt") == 0) {
+            stmt.execute("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE");
+            if (!silentMode) {
+                System.out.println("Колонка 'is_active' добавлена в таблицу users");
+            }
+        }
+
+        ResultSet rs2 = stmt.executeQuery(
+                "SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS " +
+                        "WHERE TABLE_NAME = 'users' AND COLUMN_NAME = 'last_login'"
+        );
+        rs2.next();
+        if (rs2.getInt("cnt") == 0) {
+            stmt.execute("ALTER TABLE users ADD COLUMN last_login TIMESTAMP NULL");
+            if (!silentMode) {
+                System.out.println("Колонка 'last_login' добавлена в таблицу users");
+            }
+        }
+    }
+
 }

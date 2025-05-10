@@ -4,6 +4,8 @@ import models.*;
 import dao.*;
 import db.DatabaseSetup;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.InputMismatchException;
@@ -128,11 +130,17 @@ public class Main {
         System.out.print("Пароль: ");
         String password = scanner.nextLine();
 
-        Student newStudent = new Student(username, password, email, fullName);
-        if (userDAO.createUser(newStudent)) {
-            System.out.println("Регистрация прошла успешно!");
-        } else {
-            System.out.println("Ошибка регистрации! Возможно, логин или email уже заняты.");
+        try{
+            int newUserId = userDAO.getNextUserId();
+            Student newStudent = new Student(newUserId, username, password, email, fullName, DatabaseSetup.getConnection());
+
+            if (userDAO.createUser(newStudent)) {
+                System.out.println("Регистрация прошла успешно!");
+            } else {
+                System.out.println("Ошибка регистрации!");
+            }
+        } catch (SQLException e){
+            System.out.println("Ошибка при регистрации:" + e.getMessage());
         }
     }
 
@@ -282,18 +290,32 @@ public class Main {
         System.out.print("Пароль: ");
         String password = scanner.nextLine();
 
-        User newUser = switch (role) {
-            case "ADMIN" -> new Administrator(username, password, email, fullName);
-            case "TEACHER" -> new Teacher(username, password, email, fullName);
-            case "STUDENT" -> new Student(username, password, email, fullName);
-            case "MANAGER" -> new CourseManager(username, password, email, fullName);
-            default -> null;
-        };
+        try {
+            int newUserId = userDAO.getNextUserId();
+            Connection connection = DatabaseSetup.getConnection();
 
-        if (newUser != null && userDAO.createUser(newUser)) {
-            System.out.println("Пользователь создан успешно!");
-        } else {
-            System.out.println("Ошибка при создании пользователя!");
+            User newUser = switch (role){
+                case "ADMIN" -> new Administrator(
+                        newUserId, username, password, email, fullName, connection);
+                case "TEACHER" -> new Teacher(
+                        newUserId, username, password, email, fullName, connection);
+                case "STUDENT" -> new Student(
+                        newUserId, username, password, email, fullName, connection);
+                case "MANAGER" -> new CourseManager(
+                        newUserId, username, password, email, fullName, connection);
+                default -> {
+                    System.out.println("Неизвестная роль!");
+                    yield null;
+                }
+            };
+
+            if (newUser != null && userDAO.createUser(newUser)) {
+                System.out.println("Пользователь создан успешно!");
+            } else {
+                System.out.println("Ошибка при создании пользователя!");
+            }
+        } catch (SQLException e){
+            System.out.println("Ошибка при создании пользователя: " + e.getMessage());
         }
     }
 
