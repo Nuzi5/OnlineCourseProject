@@ -1,16 +1,9 @@
 package dao;
 
-import models.User;
-import models.Administrator;
-import models.Teacher;
-import models.Student;
-import models.CourseManager;
-
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-
+import models.*;
 import db.DatabaseSetup;
+import java.sql.*;
+import java.util.*;
 
 public class UserDAO {
 
@@ -27,7 +20,18 @@ public class UserDAO {
             stmt.setString(5, user.getFullName());
             stmt.setString(6, user.getRole());
 
-            return stmt.executeUpdate() > 0;
+            int affectedRows = stmt.executeUpdate();
+            if (affectedRows == 0) {
+                return false;
+            }
+
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    user.setId(generatedKeys.getInt(1));
+                    return true;
+                }
+            }
+            return false;
         } catch (SQLException e) {
             System.err.println("Ошибка создания пользователя: " + e.getMessage());
             return false;
@@ -140,14 +144,5 @@ public class UserDAO {
             case "MANAGER" -> new CourseManager(id, username, password, email, fullName, connection);
             default -> throw new IllegalArgumentException("Unknown role: " + role);
         };
-    }
-
-    public int getNextUserId() throws SQLException {
-        String sql = "SELECT COALESCE(MAX(id), 0) + 1 FROM users";
-        try (Connection conn = DatabaseSetup.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            return rs.next() ? rs.getInt(1) : 1;
-        }
     }
 }

@@ -1,39 +1,30 @@
 package models;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public class Certificate {
     private final int id;
-    private final int userId;
+    private final int studentId;
     private final int courseId;
-    private final LocalDateTime issueDate;
-    private final String certificateNumber;
+    private final LocalDate issueDate;
+    private final int finalScore;
+    private final String studentName;
 
-    public Certificate(int id, int userId, int courseId, LocalDateTime issueDate, String certificateNumber) {
+    public Certificate(int id, int studentId, int courseId,
+                       LocalDate issueDate, int finalScore, String studentName) {
         this.id = id;
-        this.userId = userId;
+        this.studentId = studentId;
         this.courseId = courseId;
         this.issueDate = issueDate;
-        this.certificateNumber = certificateNumber;
+        this.finalScore = finalScore;
+        this.studentName = studentName;
     }
 
-    public int getId() {
-        return id;
-    }
 
-    public int getUserId() {
-        return userId;
-    }
-
-    public int getCourseId() {
-        return courseId;
-    }
-
-    public LocalDateTime getIssueDate() {
-        return issueDate;
-    }
-
-    public String getCertificateNumber() {
-        return certificateNumber;
-    }
+    public int getId() { return id; }
+    public int getStudentId() { return studentId; }
+    public int getCourseId() { return courseId; }
+    public LocalDate getIssueDate() { return issueDate; }
+    public int getFinalScore() { return finalScore; }
+    public String getStudentName() { return studentName; }
 }

@@ -77,7 +77,9 @@ public class DatabaseSetup {
                 "email VARCHAR(100) UNIQUE NOT NULL," +
                 "full_name VARCHAR(100) NOT NULL," +
                 "role VARCHAR(20) NOT NULL CHECK (role IN ('ADMIN', 'TEACHER', 'STUDENT', 'MANAGER'))," +
-                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                "is_active BOOLEAN DEFAULT TRUE," +
+                "last_login TIMESTAMP NULL" +
                 ")";
         executeStatement(stmt, sql, "users");
     }
@@ -330,6 +332,31 @@ public class DatabaseSetup {
                 System.out.println("Колонка 'last_login' добавлена в таблицу users");
             }
         }
+    }
+
+    private static void createTestAnswersTable(Statement stmt) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS test_answers (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "test_result_id INT NOT NULL," +
+                "question_id INT NOT NULL," +
+                "answer TEXT NOT NULL," +
+                "FOREIGN KEY (test_result_id) REFERENCES test_results(id) ON DELETE CASCADE," +
+                "FOREIGN KEY (question_id) REFERENCES test_questions(id) ON DELETE CASCADE" +
+                ")";
+        executeStatement(stmt, sql, "test_answers");
+    }
+
+    private static void createTextAnswerGradesTable(Statement stmt) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS text_answer_grades (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "answer_id INT NOT NULL," +
+                "score INT NOT NULL," +
+                "graded_by INT NOT NULL," +
+                "graded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                "FOREIGN KEY (answer_id) REFERENCES test_answers(id)," +
+                "FOREIGN KEY (graded_by) REFERENCES users(id)" +
+                ")";
+        executeStatement(stmt, sql, "text_answer_grades");
     }
 
 }

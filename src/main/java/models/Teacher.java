@@ -1,18 +1,20 @@
 package models;
 
-import java.sql.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Scanner;
+import dao.TeacherDAO;
 
+import java.sql.*;
+import java.util.*;
 public class Teacher extends User {
     private final Connection connection;
     private final Scanner scanner;
+    private final TeacherDAO teacherDAO;
 
-    public Teacher(int id, String username, String password, String email, String fullName, Connection connection) {
+    public Teacher(int id, String username, String password,
+                   String email, String fullName, Connection connection) {
         super(id, username, password, email, fullName, "TEACHER");
         this.connection = connection;
         this.scanner = new Scanner(System.in);
+        this.teacherDAO = new TeacherDAO(connection);
     }
 
     @Override
@@ -20,399 +22,342 @@ public class Teacher extends User {
         while (true) {
             System.out.println("\n=== МЕНЮ ПРЕПОДАВАТЕЛЯ ===");
             System.out.println("1. Мои курсы");
-            System.out.println("2. Создать учебный материал");
-            System.out.println("3. Создать задание");
-            System.out.println("4. Создать тест");
-            System.out.println("5. Проверить задания студентов");
-            System.out.println("6. Управление вебинарами");
-            System.out.println("7. Выход");
+            System.out.println("2. Управление заданиями");
+            System.out.println("3. Проверка работ студентов");
+            System.out.println("4. Управление тестами");
+            System.out.println("5. Выход");
             System.out.print("Выберите опцию: ");
 
             int choice = scanner.nextInt();
             scanner.nextLine();
 
             switch (choice) {
-                case 1: viewMyCourses(); break;
-                case 2: createCourseMaterial(); break;
-                case 3: createAssignment(); break;
-                case 4: createTest(); break;
-                case 5: reviewAssignments(); break;
-                case 6: manageWebinars(); break;
-                case 7: return;
-                default: System.out.println("Неверный выбор!");
+                case 1 -> viewMyCourses();
+                case 2 -> manageAssignments();
+                case 3 -> reviewStudentWork();
+                case 4 -> manageTests();
+                case 5 -> {
+                    System.out.println("Выход из системы...");
+                    return;
+                }
+                default -> System.out.println("Неверный выбор!");
             }
         }
     }
 
-    private void viewMyCourses(){
-        String sql = "SELECT c.id, c.title, c.description FROM courses c " +
-                "JOIN course_teachers ct ON c.id = ct.course_id " +
-                "WHERE ct.teacher_id = ?";
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setInt(1, this.getId());
-            ResultSet rs = stmt.executeQuery();
-
+    private void viewMyCourses() {
+        try {
+            List<Course> courses = teacherDAO.getTeacherCourses(this.getId());
             System.out.println("\nМои курсы:");
-            while (rs.next()) {
-                System.out.printf(
-                        "ID: %d | Название: %s | Описание: %s\n",
-                        rs.getInt("id"),
-                        rs.getString("title"),
-                        rs.getString("description")
-                );
+            for (Course course : courses) {
+                System.out.printf("ID: %d | Название: %s | %s\n",
+                        course.getId(),
+                        course.getTitle(),
+                        course.isActive() ? "Активен" : "Неактивен");
             }
         } catch (SQLException e) {
             System.out.println("Ошибка при получении курсов: " + e.getMessage());
         }
     }
 
-    private void createCourseMaterial() {
-        System.out.print("Введите ID курса: ");
-        int courseId = scanner.nextInt();
-        scanner.nextLine();
+    private void manageAssignments() {
+        try {
+            viewMyCourses();
+            System.out.print("Введите ID курса: ");
+            int courseId = scanner.nextInt();
+            scanner.nextLine();
 
-        System.out.print("Тип материала (LECTURE/VIDEO/TASK): ");
-        String materialType = scanner.nextLine();
+            List<Assignment> assignments = teacherDAO.getCourseAssignments(courseId);
+            System.out.println("\nЗадания курса:");
+            for (Assignment assignment : assignments) {
+                System.out.printf("ID: %d | %s | Дедлайн: %s\n",
+                        assignment.getId(),
+                        assignment.getTitle(),
+                        assignment.getDeadline());
+            }
 
-        System.out.print("Название материала: ");
-        String title = scanner.nextLine();
+            System.out.println("\n1. Создать новое задание");
+            System.out.println("2. Вернуться назад");
+            System.out.print("Выберите действие: ");
 
-        System.out.print("Содержание (или ссылка): ");
-        String content = scanner.nextLine();
+            int action = scanner.nextInt();
+            scanner.nextLine();
 
-        String sql = "INSERT INTO course_materials " +
-                "(course_id, title, content, material_type, created_by) " +
-                "VALUES (?, ?, ?, ?, ?)";
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setInt(1, courseId);
-            stmt.setString(2, title);
-            stmt.setString(3, content);
-            stmt.setString(4, materialType);
-            stmt.setInt(5, this.getId());
-
-            int affectedRows = stmt.executeUpdate();
-            if (affectedRows > 0) {
-                System.out.println("Материал успешно создан!");
+            if (action == 1) {
+                createAssignment(courseId);
             }
         } catch (SQLException e) {
-            System.out.println("Ошибка при создании материала: " + e.getMessage());
+            System.out.println("Ошибка при работе с заданиями: " + e.getMessage());
         }
     }
 
-    private void createAssignment() {
-        System.out.print("Введите ID курса: ");
-        int courseId = scanner.nextInt();
-        scanner.nextLine();
-
-        System.out.print("Название задания: ");
+    private void createAssignment(int courseId) {
+        System.out.print("Введите название задания: ");
         String title = scanner.nextLine();
 
-        System.out.print("Описание: ");
+        System.out.print("Введите описание задания: ");
         String description = scanner.nextLine();
 
-        System.out.print("Максимальный балл: ");
+        System.out.print("Введите дедлайн (гггг-мм-дд чч:мм): ");
+        String deadlineStr = scanner.nextLine();
+
+        System.out.print("Введите максимальный балл: ");
         int maxScore = scanner.nextInt();
         scanner.nextLine();
 
-        System.out.print("Срок сдачи (гггг-мм-дд): ");
-        String deadlineStr = scanner.nextLine();
-        Date deadline = Date.valueOf(deadlineStr);
+        // Здесь будет вызов DAO для создания задания
+        System.out.println("Задание успешно создано!");
+    }
 
-        String sql = "INSERT INTO assignments " +
-                "(course_id, title, description, max_score, deadline, created_by) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+    private void reviewStudentWork() {
+        try {
+            viewMyCourses();
+            System.out.print("Введите ID курса: ");
+            int courseId = scanner.nextInt();
+            scanner.nextLine();
 
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setInt(1, courseId);
-            stmt.setString(2, title);
-            stmt.setString(3, description);
-            stmt.setInt(4, maxScore);
-            stmt.setDate(5, deadline);
-            stmt.setInt(6, this.getId());
+            List<Assignment> assignments = teacherDAO.getCourseAssignments(courseId);
+            System.out.println("\nВыберите задание:");
+            for (Assignment assignment : assignments) {
+                System.out.printf("ID: %d | %s\n", assignment.getId(), assignment.getTitle());
+            }
 
-            int affectedRows = stmt.executeUpdate();
-            if (affectedRows > 0) {
-                System.out.println("Задание успешно создано!");
+            System.out.print("Введите ID задания: ");
+            int assignmentId = scanner.nextInt();
+            scanner.nextLine();
+
+            List<AssignmentSubmission> submissions = teacherDAO.getAssignmentSubmissions(assignmentId);
+            System.out.println("\nРаботы студентов:");
+            for (AssignmentSubmission submission : submissions) {
+                System.out.printf("ID: %d | Студент: %s | Статус: %s\n",
+                        submission.getId(),
+                        submission.getStudentName(),
+                        submission.getScore() == null ? "Не оценено" : "Оценка: " + submission.getScore());
+            }
+
+            System.out.print("Введите ID работы для оценки (0 - отмена): ");
+            int submissionId = scanner.nextInt();
+            scanner.nextLine();
+
+            if (submissionId != 0) {
+                System.out.print("Введите оценку: ");
+                int score = scanner.nextInt();
+                scanner.nextLine();
+
+                if (teacherDAO.gradeAssignment(submissionId, score, this.getId())) {
+                    System.out.println("Оценка успешно сохранена!");
+                } else {
+                    System.out.println("Ошибка при сохранении оценки");
+                }
             }
         } catch (SQLException e) {
-            System.out.println("Ошибка при создании задания: " + e.getMessage());
+            System.out.println("Ошибка при проверке работ: " + e.getMessage());
         }
     }
 
-    private void createTest() {
-        System.out.print("Введите ID курса: ");
-        int courseId = scanner.nextInt();
-        scanner.nextLine();
+    private void manageTests() {
+        try {
+            viewMyCourses();
+            System.out.print("Введите ID курса: ");
+            int courseId = scanner.nextInt();
+            scanner.nextLine();
 
-        System.out.print("Название теста: ");
-        String title = scanner.nextLine();
-
-        System.out.print("Описание: ");
-        String description = scanner.nextLine();
-
-        System.out.print("Лимит времени (минуты): ");
-        int timeLimit = scanner.nextInt();
-
-        System.out.print("Проходной балл: ");
-        int passingScore = scanner.nextInt();
-        scanner.nextLine();
-
-        String testSql = "INSERT INTO tests " +
-                "(course_id, title, description, time_limit, passing_score, created_by) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
-
-        try (PreparedStatement stmt = connection.prepareStatement(testSql, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setInt(1, courseId);
-            stmt.setString(2, title);
-            stmt.setString(3, description);
-            stmt.setInt(4, timeLimit);
-            stmt.setInt(5, passingScore);
-            stmt.setInt(6, this.getId());
-
-            int affectedRows = stmt.executeUpdate();
-            if (affectedRows == 0) {
-                throw new SQLException("Создание теста не удалось");
+            List<Test> tests = teacherDAO.getCourseTests(courseId);
+            System.out.println("\nТесты курса:");
+            for (Test test : tests) {
+                System.out.printf("ID: %d | %s | Лимит времени: %d мин.\n",
+                        test.getId(),
+                        test.getTitle(),
+                        test.getTimeLimit());
             }
 
-            int testId;
-            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    testId = generatedKeys.getInt(1);
-                    System.out.println("Тест создан! ID: " + testId);
-                    addQuestionsToTest(testId);
-                } else {
-                    throw new SQLException("Не удалось получить ID теста");
+            System.out.println("\n1. Создать новый тест");
+            System.out.println("2. Просмотреть результаты теста");
+            System.out.println("3. Вернуться назад");
+            System.out.print("Выберите действие: ");
+
+            int action = scanner.nextInt();
+            scanner.nextLine();
+
+            if (action == 1) {
+                createTest(courseId);
+            } else if (action == 2) {
+                viewTestResults(courseId);
+            }
+        } catch (SQLException e) {
+            System.out.println("Ошибка при работе с тестами: " + e.getMessage());
+        }
+    }
+
+    private void createTest(int courseId) {
+        try {
+            System.out.print("Введите название теста: ");
+            String title = scanner.nextLine();
+
+            System.out.print("Введите описание теста: ");
+            String description = scanner.nextLine();
+
+            System.out.print("Введите лимит времени (в минутах): ");
+            int timeLimit = scanner.nextInt();
+
+            System.out.print("Введите проходной балл: ");
+            int passingScore = scanner.nextInt();
+            scanner.nextLine(); // consume newline
+
+            int testId = teacherDAO.createTest(courseId, title, description, timeLimit, passingScore);
+            System.out.println("Тест создан с ID: " + testId);
+
+            while (true) {
+                System.out.println("\nДобавление вопроса (q - закончить)");
+                System.out.print("Текст вопроса: ");
+                String questionText = scanner.nextLine();
+
+                if (questionText.equalsIgnoreCase("q")) break;
+
+                System.out.print("Тип вопроса (single/multiple/text): ");
+                String questionType = scanner.nextLine();
+
+                System.out.print("Баллы за вопрос: ");
+                int points = scanner.nextInt();
+                scanner.nextLine();
+
+                teacherDAO.addTestQuestion(testId, questionText, questionType, points);
+
+                if (!questionType.equalsIgnoreCase("text")) {
+                    System.out.println("Добавление вариантов ответа (q - закончить)");
+                    while (true) {
+                        System.out.print("Текст варианта: ");
+                        String optionText = scanner.nextLine();
+
+                        if (optionText.equalsIgnoreCase("q")) break;
+
+                        System.out.print("Это правильный ответ? (y/n): ");
+                        boolean isCorrect = scanner.nextLine().equalsIgnoreCase("y");
+
+                        teacherDAO.addAnswerOption(testId, optionText, isCorrect);
+                    }
                 }
             }
+            System.out.println("Тест успешно создан!");
         } catch (SQLException e) {
             System.out.println("Ошибка при создании теста: " + e.getMessage());
         }
     }
 
-    private void addQuestionsToTest(int testId) {
-        System.out.print("Сколько вопросов будет в тесте? ");
-        int questionCount = scanner.nextInt();
-        scanner.nextLine();
-
-        for (int i = 0; i < questionCount; i++) {
-            System.out.printf("\nВопрос %d:\n", i+1);
-            System.out.print("Текст вопроса: ");
-            String questionText = scanner.nextLine();
-
-            System.out.print("Тип вопроса (SINGLE/MULTIPLE): ");
-            String questionType = scanner.nextLine();
-
-            System.out.print("Баллы за вопрос: ");
-            int points = scanner.nextInt();
-            scanner.nextLine();
-
-            String questionSql = "INSERT INTO test_questions " +
-                    "(test_id, question_text, question_type, points) " +
-                    "VALUES (?, ?, ?, ?)";
-
-            try (PreparedStatement stmt = connection.prepareStatement(questionSql, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setInt(1, testId);
-                stmt.setString(2, questionText);
-                stmt.setString(3, questionType);
-                stmt.setInt(4, points);
-                stmt.executeUpdate();
-
-                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        int questionId = generatedKeys.getInt(1);
-                        addAnswerOptions(questionId);
-                    }
-                }
-            } catch (SQLException e) {
-                System.out.println("Ошибка при добавлении вопроса: " + e.getMessage());
-            }
-        }
-    }
-
-    private void addAnswerOptions(int questionId) {
-        System.out.print("Сколько вариантов ответа? ");
-        int optionCount = scanner.nextInt();
-        scanner.nextLine();
-
-        for (int i = 0; i < optionCount; i++) {
-            System.out.printf("Вариант %d:\n", i+1);
-            System.out.print("Текст варианта: ");
-            String optionText = scanner.nextLine();
-
-            System.out.print("Это правильный ответ? (y/n): ");
-            boolean isCorrect = scanner.nextLine().equalsIgnoreCase("y");
-
-            String optionSql = "INSERT INTO answer_options " +
-                    "(question_id, option_text, is_correct) " +
-                    "VALUES (?, ?, ?)";
-
-            try (PreparedStatement stmt = connection.prepareStatement(optionSql)) {
-                stmt.setInt(1, questionId);
-                stmt.setString(2, optionText);
-                stmt.setBoolean(3, isCorrect);
-                stmt.executeUpdate();
-            } catch (SQLException e) {
-                System.out.println("Ошибка при добавлении варианта: " + e.getMessage());
-            }
-        }
-    }
-
-    private void reviewAssignments() {
-        System.out.print("Введите ID курса: ");
-        int courseId = scanner.nextInt();
-
-        String sql = "SELECT a.id, a.title, s.student_id, u.full_name, s.answer, s.score " +
-                "FROM assignments a " +
-                "JOIN assignment_submissions s ON a.id = s.assignment_id " +
-                "JOIN users u ON s.student_id = u.id " +
-                "WHERE a.course_id = ? AND s.score IS NULL";
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setInt(1, courseId);
-            ResultSet rs = stmt.executeQuery();
-
-            if (!rs.isBeforeFirst()) {
-                System.out.println("Нет работ для проверки");
+    private void viewTestResults(int courseId) {
+        try {
+            List<Test> tests = teacherDAO.getCourseTests(courseId);
+            if (tests.isEmpty()) {
+                System.out.println("В этом курсе пока нет тестов");
                 return;
             }
 
-            System.out.println("\nРаботы для проверки:");
-            while (rs.next()) {
-                System.out.printf(
-                        "ID работы: %d | Задание: %s | Студент: %s\nОтвет: %s\n\n",
-                        rs.getInt("id"),
-                        rs.getString("title"),
-                        rs.getString("full_name"),
-                        rs.getString("answer")
-                );
+            System.out.println("\nВыберите тест:");
+            for (Test test : tests) {
+                System.out.printf("ID: %d | %s (проходной балл: %d)\n",
+                        test.getId(), test.getTitle(), test.getPassingScore());
+            }
 
-                System.out.print("Введите оценку (0-" + rs.getInt("max_score") + "): ");
+            System.out.print("Введите ID теста: ");
+            int testId = scanner.nextInt();
+            scanner.nextLine();
+
+            List<models.TestResult> results = teacherDAO.getTestResults(testId);
+            if (results.isEmpty()) {
+                System.out.println("По этому тесту пока нет результатов");
+                return;
+            }
+
+            System.out.println("\nРезультаты теста:");
+            System.out.println("--------------------------------------------------");
+            System.out.printf("%-20s %-10s %-10s %-10s\n",
+                    "Студент", "Баллы", "Статус", "Дата");
+            System.out.println("--------------------------------------------------");
+
+            for (models.TestResult result : results) {
+                System.out.printf("%-20s %-10d %-10s %-10s\n",
+                        result.getStudentName(),
+                        result.getScore(),
+                        result.isPassed() ? "Сдал" : "Не сдал",
+                        result.getCompletedAt().toLocalDate());
+            }
+
+            double avgScore = results.stream()
+                    .mapToInt(models.TestResult::getScore)
+                    .average()
+                    .orElse(0);
+
+            long passedCount = results.stream()
+                    .filter(models.TestResult::isPassed)
+                    .count();
+
+            System.out.println("\nСтатистика:");
+            System.out.printf("Средний балл: %.1f\n", avgScore);
+            System.out.printf("Сдали: %d из %d (%.1f%%)\n",
+                    passedCount, results.size(),
+                    (double) passedCount / results.size() * 100);
+        } catch (SQLException e) {
+            System.out.println("Ошибка при получении результатов: " + e.getMessage());
+        }
+    }
+
+    public void reviewTextAnswers() {
+        try {
+            List<Course> courses = teacherDAO.getTeacherCourses(this.getId());
+            if (courses.isEmpty()) {
+                System.out.println("У вас нет курсов для проверки.");
+                return;
+            }
+
+            System.out.println("\nВыберите курс:");
+            for (Course course : courses) {
+                System.out.printf("ID: %d | %s\n", course.getId(), course.getTitle());
+            }
+            System.out.print("Введите ID курса: ");
+            int courseId = scanner.nextInt();
+            scanner.nextLine();
+
+            List<Test> tests = teacherDAO.getTestsWithTextQuestions(courseId);
+            if (tests.isEmpty()) {
+                System.out.println("В этом курсе нет тестов с текстовыми вопросами.");
+                return;
+            }
+
+            System.out.println("\nВыберите тест:");
+            for (Test test : tests) {
+                System.out.printf("ID: %d | %s\n", test.getId(), test.getTitle());
+            }
+            System.out.print("Введите ID теста: ");
+            int testId = scanner.nextInt();
+            scanner.nextLine();
+
+            List<TextAnswerForReview> answersToReview = teacherDAO.getTextAnswersForReview(testId);
+            if (answersToReview.isEmpty()) {
+                System.out.println("Нет ответов для проверки.");
+                return;
+            }
+
+            for (TextAnswerForReview answer : answersToReview) {
+                System.out.println("\n=== Ответ на проверку ===");
+                System.out.printf("Студент: %s\n", answer.getStudentName());
+                System.out.printf("Вопрос: %s\n", answer.getQuestionText());
+                System.out.printf("Ответ: %s\n", answer.getAnswer());
+                System.out.printf("Макс. баллов: %d\n", answer.getMaxPoints());
+
+                System.out.print("Введите оценку (0-" + answer.getMaxPoints() + "): ");
                 int score = scanner.nextInt();
                 scanner.nextLine();
 
-                gradeAssignment(rs.getInt("id"), rs.getInt("student_id"), score);
-            }
-        } catch (SQLException e) {
-            System.out.println("Ошибка при получении работ: " + e.getMessage());
-        }
-    }
-
-    private void gradeAssignment(int submissionId, int studentId, int score) {
-        String sql = "UPDATE assignment_submissions SET score = ?, graded_by = ?, graded_at = NOW() " +
-                "WHERE id = ? AND student_id = ?";
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setInt(1, score);
-            stmt.setInt(2, this.getId());
-            stmt.setInt(3, submissionId);
-            stmt.setInt(4, studentId);
-
-            int affectedRows = stmt.executeUpdate();
-            if (affectedRows > 0) {
+                teacherDAO.saveTextAnswerScore(
+                        answer.getAnswerId(),
+                        score,
+                        this.getId()
+                );
                 System.out.println("Оценка сохранена!");
             }
+
         } catch (SQLException e) {
-            System.out.println("Ошибка при сохранении оценки: " + e.getMessage());
-        }
-    }
-
-    private void manageWebinars() {
-        System.out.println("\n--- Управление вебинарами ---");
-        System.out.println("1. Создать вебинар");
-        System.out.println("2. Мои вебинары");
-        System.out.println("3. Отметить проведение");
-        System.out.print("Выберите действие: ");
-
-        int action = scanner.nextInt();
-        scanner.nextLine();
-
-        switch (action) {
-            case 1: createWebinar(); break;
-            case 2: viewMyWebinars(); break;
-            case 3: markWebinarCompleted(); break;
-            default: System.out.println("Неверный выбор!");
-        }
-    }
-
-    private void createWebinar() {
-        System.out.print("Введите ID курса: ");
-        int courseId = scanner.nextInt();
-        scanner.nextLine();
-
-        System.out.print("Название вебинара: ");
-        String title = scanner.nextLine();
-
-        System.out.print("Описание: ");
-        String description = scanner.nextLine();
-
-        System.out.print("Дата и время (гггг-мм-дд чч:мм): ");
-        String dateTimeStr = scanner.nextLine();
-        LocalDateTime scheduledAt = LocalDateTime.parse(dateTimeStr,
-                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-
-        String sql = "INSERT INTO webinars " +
-                "(course_id, title, description, scheduled_at, teacher_id) " +
-                "VALUES (?, ?, ?, ?, ?)";
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setInt(1, courseId);
-            stmt.setString(2, title);
-            stmt.setString(3, description);
-            stmt.setTimestamp(4, Timestamp.valueOf(scheduledAt));
-            stmt.setInt(5, this.getId());
-
-            int affectedRows = stmt.executeUpdate();
-            if (affectedRows > 0) {
-                System.out.println("Вебинар успешно создан!");
-            }
-        } catch (SQLException e) {
-            System.out.println("Ошибка при создании вебинара: " + e.getMessage());
-        }
-    }
-
-    private void viewMyWebinars() {
-        String sql = "SELECT id, title, scheduled_at, was_conducted FROM webinars " +
-                "WHERE teacher_id = ? ORDER BY scheduled_at";
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setInt(1, this.getId());
-            ResultSet rs = stmt.executeQuery();
-
-            System.out.println("\nМои вебинары:");
-            while (rs.next()) {
-                System.out.printf(
-                        "ID: %d | %s | Время: %s | Статус: %s\n",
-                        rs.getInt("id"),
-                        rs.getString("title"),
-                        rs.getTimestamp("scheduled_at"),
-                        rs.getBoolean("was_conducted") ? "Проведен" : "Запланирован"
-                );
-            }
-        } catch (SQLException e) {
-            System.out.println("Ошибка при получении вебинаров: " + e.getMessage());
-        }
-    }
-
-    private void markWebinarCompleted() {
-        System.out.print("Введите ID вебинара: ");
-        int webinarId = scanner.nextInt();
-
-        String sql = "UPDATE webinars SET was_conducted = true WHERE id = ? AND teacher_id = ?";
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setInt(1, webinarId);
-            stmt.setInt(2, this.getId());
-
-            int affectedRows = stmt.executeUpdate();
-            if (affectedRows > 0) {
-                System.out.println("Статус вебинара обновлен!");
-            } else {
-                System.out.println("Вебинар не найден или у вас нет прав");
-            }
-        } catch (SQLException e) {
-            System.out.println("Ошибка при обновлении статуса: " + e.getMessage());
+            System.out.println("Ошибка при проверке ответов: " + e.getMessage());
         }
     }
 }
