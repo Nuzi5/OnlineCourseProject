@@ -123,7 +123,7 @@ public class TeacherDAO {
     }
 
     public int createTest(int courseId, String title, String description,
-                          int timeLimit, int passingScore) throws SQLException {
+                          Integer timeLimit, Integer passingScore, int createdBy) throws SQLException {
         String sql = "INSERT INTO tests (course_id, title, description, time_limit, passing_score, created_by) " +
                 "VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -131,21 +131,21 @@ public class TeacherDAO {
             stmt.setInt(1, courseId);
             stmt.setString(2, title);
             stmt.setString(3, description);
-            stmt.setInt(4, timeLimit);
-            stmt.setInt(5, passingScore);
-            stmt.setInt(6, -1); // Временное значение, можно добавить created_by
+            stmt.setObject(4, timeLimit);
+            stmt.setObject(5, passingScore);
+            stmt.setInt(6, createdBy);
 
             stmt.executeUpdate();
 
-            try (ResultSet rs = stmt.getGeneratedKeys()) {
-                if (rs.next()) {
-                    return rs.getInt(1);
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    return generatedKeys.getInt(1);
+                } else {
+                    throw new SQLException("Не удалось получить ID созданного теста");
                 }
             }
         }
-        throw new SQLException("Не удалось создать тест, ID не получен");
     }
-
     public boolean addTestQuestion(int testId, String questionText, String questionType, int points) throws SQLException {
         String sql = "INSERT INTO test_questions (test_id, question_text, question_type, points) " +
                 "VALUES (?, ?, ?, ?)";
@@ -188,7 +188,7 @@ public class TeacherDAO {
                 results.add(new models.TestResult(
                         rs.getInt("id"),
                         testId,
-                        0, // studentId - временное значение
+                        rs.getInt("student_id"),
                         rs.getString("full_name"),
                         rs.getInt("score"),
                         rs.getInt("passing_score"),

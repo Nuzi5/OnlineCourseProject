@@ -1,12 +1,11 @@
 package app;
 
+import db.*;
 import models.*;
 import dao.*;
-import db.DatabaseSetup;
 
-import java.sql.SQLException;
-import java.util.InputMismatchException;
-import java.util.Scanner;
+import java.sql.*;
+import java.util.*;
 
 public class Main {
     private static final Scanner scanner = new Scanner(System.in);
@@ -21,7 +20,14 @@ public class Main {
 
     private static void initializeDatabaseAndDAOs() {
         DatabaseSetup.initDatabase();
-        userDAO = new UserDAO();
+
+        try {
+            Connection connection = DatabaseSetup.getConnection();
+            userDAO = new UserDAO(connection);
+        } catch (SQLException e) {
+            System.err.println("Ошибка подключения к базе данных: " + e.getMessage());
+            System.exit(1);
+        }
     }
 
     private static void showMainMenu() {
@@ -108,15 +114,17 @@ public class Main {
         String password = scanner.nextLine();
 
         try {
-            Student newStudent = new Student(0, username, password, email, fullName, DatabaseSetup.getConnection());
+            int newUserId = userDAO.createUser(username, password, email, fullName, "STUDENT");
 
-            if (userDAO.createUser(newStudent)) {
-                System.out.println("Регистрация прошла успешно! Ваш id: " + newStudent.getId());
+            if (newUserId > 0) {
+                System.out.println("Регистрация прошла успешно! Ваш id: " + newUserId);
+                // Создаем объект Student с полученным ID
+                currentUser = new Student(newUserId, username, password, email, fullName, DatabaseSetup.getConnection());
             } else {
                 System.out.println("Ошибка регистрации!");
             }
         } catch (SQLException e) {
-            System.out.println("Ошибка при регистрации:" + e.getMessage());
+            System.out.println("Ошибка при регистрации: " + e.getMessage());
         }
     }
 

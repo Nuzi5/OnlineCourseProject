@@ -47,6 +47,7 @@ public class DatabaseSetup {
             createActivityLogsTable(stmt);
 
             updateUserTable(stmt);
+            updateTestTable(stmt);
 
             if (!silentMode) {
                 System.out.println("База данных успешно инициализирована.");
@@ -331,6 +332,28 @@ public class DatabaseSetup {
             if (!silentMode) {
                 System.out.println("Колонка 'last_login' добавлена в таблицу users");
             }
+        }
+    }
+
+    private static void updateTestTable(Statement stmt) throws SQLException {
+        ResultSet rs = stmt.executeQuery(
+                "SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS " +
+                        "WHERE TABLE_NAME = 'tests' AND COLUMN_NAME = 'created_by'"
+        );
+        rs.next();
+        if (rs.getInt("cnt") == 0) {
+            stmt.execute("ALTER TABLE tests ADD COLUMN created_by INT");
+            stmt.execute("ALTER TABLE tests ADD CONSTRAINT fk_tests_created_by " +
+                    "FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL");
+        }
+
+        rs = stmt.executeQuery(
+                "SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS " +
+                        "WHERE TABLE_NAME = 'tests' AND COLUMN_NAME = 'created_at'"
+        );
+        rs.next();
+        if (rs.getInt("cnt") == 0) {
+            stmt.execute("ALTER TABLE tests ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
         }
     }
 

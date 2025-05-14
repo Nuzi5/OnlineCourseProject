@@ -202,9 +202,11 @@ public class Teacher extends User {
 
             System.out.print("Введите проходной балл: ");
             int passingScore = scanner.nextInt();
-            scanner.nextLine(); // consume newline
+            scanner.nextLine();
 
-            int testId = teacherDAO.createTest(courseId, title, description, timeLimit, passingScore);
+            int createdBy = this.getId();
+
+            int testId = teacherDAO.createTest(courseId, title, description, timeLimit, passingScore, createdBy);
             System.out.println("Тест создан с ID: " + testId);
 
             while (true) {

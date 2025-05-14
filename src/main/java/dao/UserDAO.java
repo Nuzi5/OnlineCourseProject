@@ -6,35 +6,36 @@ import java.sql.*;
 import java.util.*;
 
 public class UserDAO {
+    private final Connection connection;
 
-    public boolean createUser(User user) {
-        String sql = "INSERT INTO users (id, username, password, email, full_name, role) VALUES (?, ?, ?, ?, ?, ?)";
+    public UserDAO(Connection connection) {
+        this.connection = connection;
+    }
 
-        try (Connection conn = DatabaseSetup.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+    public int createUser(String username, String password, String email,
+                          String fullName, String role) throws SQLException {
+        String sql = "INSERT INTO users (username, password, email, full_name, role) " +
+                "VALUES (?, ?, ?, ?, ?)";
 
-            stmt.setInt(1, user.getId());
-            stmt.setString(2, user.getUsername());
-            stmt.setString(3, user.getPassword());
-            stmt.setString(4, user.getEmail());
-            stmt.setString(5, user.getFullName());
-            stmt.setString(6, user.getRole());
+        try (PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setString(1, username);
+            stmt.setString(2, password);
+            stmt.setString(3, email);
+            stmt.setString(4, fullName);
+            stmt.setString(5, role);
 
             int affectedRows = stmt.executeUpdate();
+
             if (affectedRows == 0) {
-                return false;
+                return -1;
             }
 
             try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
-                    user.setId(generatedKeys.getInt(1));
-                    return true;
+                    return generatedKeys.getInt(1);
                 }
             }
-            return false;
-        } catch (SQLException e) {
-            System.err.println("Ошибка создания пользователя: " + e.getMessage());
-            return false;
+            throw new SQLException("Не удалось получить ID пользователя");
         }
     }
 
