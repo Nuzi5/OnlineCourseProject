@@ -1,6 +1,8 @@
 package models;
 
 import dao.AdminDAO;
+import dao.UserDAO;
+import db.DatabaseSetup;
 
 import java.sql.*;
 import java.util.Scanner;
@@ -12,7 +14,7 @@ public class Administrator extends User {
 
     public Administrator(int id, String username, String password,
                          String email, String fullName, Connection connection) {
-        super(id, username, password, email, fullName, "ADMIN");
+        super(id, username, password, email, fullName, "ADMIN", true);
         this.scanner = new Scanner(System.in);
         this.adminDAO = new AdminDAO(connection);
         this.isActive = true;
@@ -207,8 +209,13 @@ public class Administrator extends User {
         boolean isActive = scanner.nextLine().equalsIgnoreCase("y");
 
         try {
-            if (adminDAO.createUser(username, password, email, fullName, role, isActive)) {
-                System.out.println("Пользователь успешно добавлен!");
+            Connection connection = DatabaseSetup.getConnection();
+
+            UserDAO userDAO = new UserDAO(connection);
+
+            int newUserId = userDAO.createUser(username, password, email, fullName, role, isActive);
+            if(newUserId > 0) {
+                System.out.println("Пользователь успешно добавлен! ID: " + newUserId);
             } else {
                 System.out.println("Не удалось добавить пользователя");
             }

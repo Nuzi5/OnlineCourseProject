@@ -4,15 +4,15 @@ import java.time.LocalDateTime;
 
 public abstract class User {
     private int id;
-    private final String username;
-    private final String password;
+    private String username;
+    private String password;
     private String email;
     private String fullName;
-    private final String role;
+    private String  role;
     private final LocalDateTime createdAt;
     private boolean isActive;
 
-    public User(int id, String username, String password, String email, String fullName, String role) {
+    public User(int id, String username, String password, String email, String fullName, String role, boolean isActive) {
         this.id = id;
         this.username = username;
         this.password = password;
@@ -48,5 +48,11 @@ public abstract class User {
                 ", role='" + role + '\'' +
                 ", createdAt=" + createdAt +
                 '}';
+    }
+
+    public void setUsername(String username) {
+    }
+
+    public void setPassword(String password) {
     }
 }

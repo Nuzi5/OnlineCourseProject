@@ -13,29 +13,99 @@ public class UserDAO {
     }
 
     public int createUser(String username, String password, String email,
-                          String fullName, String role) throws SQLException {
-        String sql = "INSERT INTO users (username, password, email, full_name, role) " +
-                "VALUES (?, ?, ?, ?, ?)";
+                          String fullName, String role, boolean isActive) throws SQLException {
+        int maxId = getMaxUserIdFromDB();
+        int newId = maxId + 1;
 
-        try (PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setString(1, username);
-            stmt.setString(2, password);
-            stmt.setString(3, email);
-            stmt.setString(4, fullName);
-            stmt.setString(5, role);
+        String sql = "INSERT INTO users (id, username, password, email, full_name, role, is_active) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-            int affectedRows = stmt.executeUpdate();
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, newId);
+            stmt.setString(2, username);
+            stmt.setString(3, password);
+            stmt.setString(4, email);
+            stmt.setString(5, fullName);
+            stmt.setString(6, role.toUpperCase());
+            stmt.setBoolean(7, isActive);
 
-            if (affectedRows == 0) {
-                return -1;
-            }
+            stmt.executeUpdate();
 
-            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    return generatedKeys.getInt(1);
+            updateAutoIncrement(newId + 1);
+
+            return newId;
+        }
+    }
+
+    private int getMaxUserIdFromDB() throws SQLException {
+        String sql = "SELECT MAX(id) FROM users";
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            return rs.next() ? rs.getInt(1) : 5; // Базовый offset = 5
+        }
+    }
+
+    private void updateAutoIncrement(int newValue) throws SQLException {
+        try (Statement stmt = connection.createStatement()) {
+            stmt.execute("ALTER TABLE users AUTO_INCREMENT = " + newValue);
+        }
+    }
+
+    private void disableAutoIncrement() throws SQLException {
+        try (Statement stmt = connection.createStatement()) {
+            stmt.execute("SET @@SESSION.sql_mode='NO_AUTO_VALUE_ON_ZERO'");
+        }
+    }
+
+    private void enableAutoIncrement() throws SQLException {
+        try (Statement stmt = connection.createStatement()) {
+            stmt.execute("SET @@SESSION.sql_mode=''");
+        }
+    }
+
+    private void updateAutoIncrementAfterInsert(int insertedId) throws SQLException {
+        try (Statement stmt = connection.createStatement()) {
+            stmt.execute("ALTER TABLE users AUTO_INCREMENT = " + (insertedId + 1));
+        }
+    }
+
+    private boolean isIdExists(int id) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM users WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
                 }
             }
-            throw new SQLException("Не удалось получить ID пользователя");
+        }
+        return false;
+    }
+
+    private int countUsers() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM users";
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    public boolean deleteUser(int userId) throws SQLException {
+        String sql = "DELETE FROM users WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    public void resetIdSequence() throws SQLException {
+        try (Statement stmt = connection.createStatement()) {
+            // Устанавливаем AUTO_INCREMENT = 6
+            stmt.execute("ALTER TABLE users AUTO_INCREMENT = 6");
+            System.out.println("ID последовательность сброшена. AUTO_INCREMENT установлен в 6");
         }
     }
 
@@ -89,23 +159,6 @@ public class UserDAO {
             return affectedRows > 0;
         } catch (SQLException e) {
             System.err.println("Ошибка при обновлении пользователя: " + e.getMessage());
-            return false;
-        }
-    }
-
-
-    public boolean deleteUser(int id) {
-        String sql = "DELETE FROM users WHERE id = ?";
-
-        try (Connection conn = DatabaseSetup.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, id);
-
-            int affectedRows = pstmt.executeUpdate();
-            return affectedRows > 0;
-        } catch (SQLException e) {
-            System.err.println("Ошибка при удалении пользователя: " + e.getMessage());
             return false;
         }
     }

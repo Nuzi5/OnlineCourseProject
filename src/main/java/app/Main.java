@@ -20,6 +20,7 @@ public class Main {
 
     private static void initializeDatabaseAndDAOs() {
         DatabaseSetup.initDatabase();
+        DatabaseMigrator.applyMigrations();
 
         try {
             Connection connection = DatabaseSetup.getConnection();
@@ -114,17 +115,28 @@ public class Main {
         String password = scanner.nextLine();
 
         try {
-            int newUserId = userDAO.createUser(username, password, email, fullName, "STUDENT");
+            int newId = userDAO.createUser(
+                    username,
+                    password,
+                    email,
+                    fullName,
+                    "STUDENT" ,
+                    true
+            );
 
-            if (newUserId > 0) {
-                System.out.println("Регистрация прошла успешно! Ваш id: " + newUserId);
-                // Создаем объект Student с полученным ID
-                currentUser = new Student(newUserId, username, password, email, fullName, DatabaseSetup.getConnection());
-            } else {
-                System.out.println("Ошибка регистрации!");
-            }
+            Student student = new Student(
+                    newId,
+                    username,
+                    password,
+                    email,
+                    fullName,
+                    DatabaseSetup.getConnection()
+            );
+            System.out.println("Студент успешно зарегистрирован! ID: " + newId);
+
         } catch (SQLException e) {
-            System.out.println("Ошибка при регистрации: " + e.getMessage());
+            System.err.println("Ошибка регистрации: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

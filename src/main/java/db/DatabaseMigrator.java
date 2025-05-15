@@ -1,15 +1,24 @@
 package db;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class DatabaseMigrator {
-
+    public static void applyMigrations() {
+        try (Connection connection = DatabaseSetup.getConnection()) {
+            applyMigrations(connection);
+        } catch (SQLException e) {
+            System.err.println("Ошибка при применении миграций: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
     public static void applyMigrations(Connection connection) throws SQLException {
         try {
             addFinalScoreToCertificates(connection);
             addEnrollmentIdToTestResults(connection);
-            verifyUserIdsSequence(connection);
-            setUsersAutoIncrement(connection);
+            resetAndSetUsersAutoIncrement(connection);
         } catch (SQLException e) {
             throw new SQLException("Ошибка при применении миграций", e);
         }
@@ -68,27 +77,36 @@ public class DatabaseMigrator {
         }
     }
 
-    private static void setUsersAutoIncrement(Connection connection) throws SQLException {
-        int currentMaxId = getCurrentMaxUserId(connection);
-        int nextId = Math.max(currentMaxId + 1, 6); // Начинаем с 6 или следующего доступного
-
-        String sql = "ALTER TABLE users AUTO_INCREMENT = " + nextId;
-        try (Statement stmt = connection.createStatement()) {
-            stmt.execute(sql);
-        }
-    }
-
-    private static void verifyUserIdsSequence(Connection connection) throws SQLException {
-        String sql = "SELECT id FROM users ORDER BY id";
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            int expectedId = 1;
-            while (rs.next()) {
-                int actualId = rs.getInt("id");
-                if (actualId != expectedId++) {
-                    throw new SQLException("Обнаружена проблема в последовательности ID пользователей");
+    public static void resetAndSetUsersAutoIncrement(Connection connection) throws SQLException {
+        try {
+            List<Integer> existingIds = new ArrayList<>();
+            String selectSql = "SELECT id FROM users ORDER BY id";
+            try (Statement stmt = connection.createStatement();
+                 ResultSet rs = stmt.executeQuery(selectSql)) {
+                while (rs.next()) {
+                    existingIds.add(rs.getInt("id"));
                 }
             }
+
+            if (existingIds.isEmpty()) {
+                try (Statement stmt = connection.createStatement()) {
+                    stmt.execute("ALTER TABLE users AUTO_INCREMENT = 6");
+                    System.out.println("Таблица users пуста. AUTO_INCREMENT установлен в 6");
+                }
+                return;
+            }
+
+            int maxId = Collections.max(existingIds);
+            int nextId = Math.max(maxId + 1, 6);
+
+            try (Statement stmt = connection.createStatement()) {
+                stmt.execute("ALTER TABLE users AUTO_INCREMENT = " + nextId);
+                System.out.println("AUTO_INCREMENT для users установлен в " + nextId);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Ошибка при сбросе AUTO_INCREMENT для таблицы users: " + e.getMessage());
+            throw e;
         }
     }
 }

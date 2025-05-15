@@ -12,7 +12,7 @@ public class CourseManager extends User {
 
     public CourseManager(int id, String username, String password,
                          String email, String fullName, Connection connection) {
-        super(id, username, password, email, fullName, "MANAGER");
+        super(id, username, password, email, fullName, "MANAGER", true);
         this.scanner = new Scanner(System.in);
         this.managerDAO = new ManagerDAO(connection);
     }

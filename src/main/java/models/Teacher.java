@@ -11,7 +11,7 @@ public class Teacher extends User {
 
     public Teacher(int id, String username, String password,
                    String email, String fullName, Connection connection) {
-        super(id, username, password, email, fullName, "TEACHER");
+        super(id, username, password, email, fullName, "TEACHER", true);
         this.connection = connection;
         this.scanner = new Scanner(System.in);
         this.teacherDAO = new TeacherDAO(connection);
