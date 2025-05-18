@@ -12,10 +12,13 @@ public class StudentDAO {
         this.connection = connection;
     }
 
-    public List<Course> getAvailableCourses(int studentId) throws SQLException {
-        List<Course> courses = new ArrayList<>();
-        String sql = "SELECT id, title, description FROM courses " +
-                "WHERE is_active = true AND id NOT IN " +
+    public List<CourseWithTeacher> getAvailableCourses(int studentId) throws SQLException {
+        List<CourseWithTeacher> courses = new ArrayList<>();
+        String sql = "SELECT c.id, c.title, c.description, u.full_name AS teacher_name " +
+                "FROM courses c " +
+                "LEFT JOIN course_teachers ct ON c.id = ct.course_id " +
+                "LEFT JOIN users u ON ct.teacher_id = u.id " +
+                "WHERE c.is_active = true AND c.id NOT IN " +
                 "(SELECT course_id FROM enrollments WHERE user_id = ?)";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
@@ -23,14 +26,15 @@ public class StudentDAO {
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                courses.add(new Course(
+                courses.add(new CourseWithTeacher(
                         rs.getInt("id"),
                         rs.getString("title"),
                         rs.getString("description"),
-                        0,
+                        rs.getString("teacher_name"),
                         true
                 ));
-            }}
+            }
+        }
         return courses;
     }
 
@@ -71,7 +75,7 @@ public class StudentDAO {
         List<Assignment> assignments = new ArrayList<>();
         String sql = "SELECT a.id, a.title, a.description, a.deadline, a.max_score, " +
                 "s.score, s.submitted_at FROM assignments a " +
-                "LEFT JOIN assignment_submissions s ON a.id = s.assignment_id AND s.user_id = ? " +
+                "LEFT JOIN assignment_submissions s ON a.id = s.assignment_id AND s.student_id = ? " +
                 "WHERE a.course_id = ?";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
@@ -97,7 +101,7 @@ public class StudentDAO {
 
     public boolean submitAssignment(int assignmentId, int studentId, String answer) throws SQLException {
         String sql = "INSERT INTO assignment_submissions " +
-                "(assignment_id, user_id, answer, submitted_at) " +
+                "(assignment_id, student_id, answer, submitted_at) " +
                 "VALUES (?, ?, ?, CURRENT_TIMESTAMP) " +
                 "ON DUPLICATE KEY UPDATE answer = VALUES(answer), submitted_at = VALUES(submitted_at)";
 
@@ -113,7 +117,7 @@ public class StudentDAO {
         List<Test> tests = new ArrayList<>();
         String sql = "SELECT t.id, t.title, t.description, t.time_limit, t.passing_score, " +
                 "tr.score FROM tests t " +
-                "LEFT JOIN test_results tr ON t.id = tr.test_id AND tr.user_id = ? " +
+                "LEFT JOIN test_results tr ON t.id = tr.test_id AND tr.student_id = ? " +
                 "WHERE t.course_id = ?";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
@@ -172,7 +176,7 @@ public class StudentDAO {
     public boolean saveTestResult(int studentId, int testId, int score,
                                   int passingScore, Map<Integer, String> answers) throws SQLException {
         String resultSql = "INSERT INTO test_results " +
-                "(user_id, test_id, score, passing_score, completed_at) " +
+                "(student_id, test_id, score, passing_score, completed_at) " +
                 "VALUES (?, ?, ?, ?, NOW()) " +
                 "ON DUPLICATE KEY UPDATE score = VALUES(score), completed_at = VALUES(completed_at)";
 
@@ -316,9 +320,9 @@ public class StudentDAO {
                 "COALESCE(AVG(t.score), 0) as avg_test_score " +
                 "FROM enrollments e " +
                 "JOIN courses c ON e.course_id = c.id " +
-                "LEFT JOIN assignment_submissions a ON a.user_id = e.user_id AND " +
+                "LEFT JOIN assignment_submissions a ON a.student_id = e.user_id AND " +
                 "a.assignment_id IN (SELECT id FROM assignments WHERE course_id = c.id) " +
-                "LEFT JOIN test_results t ON t.user_id = e.user_id AND " +
+                "LEFT JOIN test_results t ON t.student_id = e.user_id AND " +
                 "t.test_id IN (SELECT id FROM tests WHERE course_id = c.id) " +
                 "WHERE e.user_id = ? " +
                 "GROUP BY c.title";

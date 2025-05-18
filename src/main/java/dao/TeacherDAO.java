@@ -31,7 +31,8 @@ public class TeacherDAO {
                         teacherId,
                         rs.getBoolean("is_active")
                 ));
-            }}
+            }
+        }
         return courses;
     }
 
@@ -142,8 +143,7 @@ public class TeacherDAO {
         }
     }
     public boolean addTestQuestion(int testId, String questionText, String questionType, int points) throws SQLException {
-        String sql = "INSERT INTO test_questions (test_id, question_text, question_type, points) " +
-                "VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO test_questions (test_id, question_text, question_type, points) VALUES (?, ?, ?, ?)";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, testId);

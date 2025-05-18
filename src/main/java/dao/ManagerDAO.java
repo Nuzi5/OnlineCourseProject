@@ -58,7 +58,7 @@ public class ManagerDAO {
 
     public List<CourseStats> getCourseStatistics() throws SQLException {
         List<CourseStats> stats = new ArrayList<>();
-        String sql = "SELECT c.id, c.title, COUNT(e.student_id) as students_count " +
+        String sql = "SELECT c.id, c.title, COUNT(e.user_id) as students_count " +
                 "FROM courses c LEFT JOIN enrollments e ON c.id = e.course_id " +
                 "GROUP BY c.id, c.title";
 
@@ -174,5 +174,27 @@ public class ManagerDAO {
                 );
             }}
         return null;
+    }
+
+    public List<CourseWithTeacher> getAllCoursesWithTeachers() throws SQLException {
+        List<CourseWithTeacher> courses = new ArrayList<>();
+        String sql = "SELECT c.id, c.title, c.description, c.is_active, u.full_name AS teacher_name " +
+                "FROM courses c " +
+                "LEFT JOIN course_teachers ct ON c.id = ct.course_id " +
+                "LEFT JOIN users u ON ct.teacher_id = u.id";
+
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                courses.add(new CourseWithTeacher(
+                        rs.getInt("id"),
+                        rs.getString("title"),
+                        rs.getString("description"),
+                        rs.getString("teacher_name"),
+                        rs.getBoolean("is_active")
+                ));
+            }
+        }
+        return courses;
     }
 }

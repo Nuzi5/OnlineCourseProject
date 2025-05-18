@@ -42,7 +42,7 @@ public class Student extends User {
                 case 5 -> viewProgress();
                 case 6 -> viewMyCertificates();
                 case 7 -> {
-                    System.out.println("\nВыход из системы...");
+                    System.out.println("Выход из системы...\n\nРабота системы завершена. До свидания!");
                     System.exit(0);
                 }
                 default -> System.out.println("Неверный выбор!");
@@ -52,13 +52,14 @@ public class Student extends User {
 
     private void viewAvailableCourses() {
         try {
-            List<Course> courses = studentDAO.getAvailableCourses(this.getId());
+            List<CourseWithTeacher> courses = studentDAO.getAvailableCourses(this.getId());
             System.out.println("\nДоступные курсы:");
-            for (Course course : courses) {
-                System.out.printf("ID: %d | Название: %s | Описание: %s\n",
+            for (CourseWithTeacher course : courses) {
+                System.out.printf("ID: %d | Название: %s | Описание: %s | Преподаватель: %s\n",
                         course.getId(),
                         course.getTitle(),
-                        course.getDescription());
+                        course.getDescription(),
+                        course.getTeacherName() != null ? course.getTeacherName() : "Не назначен");
             }
 
             System.out.print("\nВведите ID курса для записи (0 - отмена): ");
@@ -96,17 +97,17 @@ public class Student extends User {
         System.out.println("\n*** Задания и тесты ***");
         System.out.println("1. Просмотреть задания");
         System.out.println("2. Просмотреть тесты");
+        System.out.println("3. Назад в меню студента");
         System.out.print("Выберите опцию: ");
 
         int choice = scanner.nextInt();
         scanner.nextLine();
 
-        if (choice == 1) {
-            viewAssignments();
-        } else if (choice == 2) {
-            viewTests();
-        } else {
-            System.out.println("Неверный выбор!");
+        switch (choice){
+            case 1 -> viewAssignments();
+            case 2 -> viewTests();
+            case 3 -> {return;}
+            default -> System.out.println("Неверный выбор!");
         }
     }
 
@@ -251,7 +252,7 @@ public class Student extends User {
                     test.getPassingScore(),
                     studentAnswers)) {
 
-                System.out.println("\n=== Тест завершен ===");
+                System.out.println("\n*** Тест завершен ***");
                 System.out.printf("Итоговый балл: %d/%d\n", totalScore, test.getPassingScore());
                 System.out.println("Результаты сохранены.");
             } else {

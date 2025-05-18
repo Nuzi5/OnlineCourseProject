@@ -73,4 +73,13 @@ public class DatabaseMigrator {
             return rs.next() ? rs.getInt("max_id") : 0;
         }
     }
+
+    private static void addQuestionTextColumn(Connection connection) throws SQLException {
+        if (!columnExists(connection, "test_questions", "question_text")) {
+            try (Statement stmt = connection.createStatement()) {
+                stmt.execute("ALTER TABLE test_questions ADD COLUMN question_text TEXT NOT NULL AFTER test_id");
+                stmt.execute("ALTER TABLE test_questions DROP COLUMN question");
+            }
+        }
+    }
 }

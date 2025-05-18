@@ -1,6 +1,8 @@
 package dao;
 
 import models.*;
+import models.additional.CourseWithTeacher;
+
 import java.sql.*;
 import java.util.*;
 
@@ -10,14 +12,48 @@ public class AdminDAO {
     public AdminDAO(Connection connection) {
         this.connection = connection;}
 
-    public boolean createCourse(String title, String description, int createdBy, boolean isActive) throws SQLException {
-        String sql = "INSERT INTO courses (title, description, created_by, is_active) VALUES (?, ?, ?, ?)";
+    public boolean createCourse(String title,
+                                String description,
+                                int createdBy,
+                                int teacherId,
+                                boolean isActive) throws SQLException {
+        Connection connection = this.connection;
+        try {
+            connection.setAutoCommit(false);
+
+            String courseSql = "INSERT INTO courses (title, description, created_by, is_active) VALUES (?, ?, ?, ?)";
+            try (PreparedStatement courseStmt = connection.prepareStatement(courseSql, Statement.RETURN_GENERATED_KEYS)) {
+                courseStmt.setString(1, title);
+                courseStmt.setString(2, description);
+                courseStmt.setInt(3, createdBy);
+                courseStmt.setBoolean(4, isActive);
+
+                int affectedRows = courseStmt.executeUpdate();
+                if (affectedRows == 0) throw new SQLException("Не удалось создать курс");
+
+                try (ResultSet generatedKeys = courseStmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int courseId = generatedKeys.getInt(1);
+                        assignTeacherToCourse(courseId, teacherId, connection);
+                    }
+                }
+            }
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            connection.rollback();
+            throw e;
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+
+    private void assignTeacherToCourse(int courseId, int teacherId, Connection connection) throws SQLException {
+        String sql = "INSERT INTO course_teachers (course_id, teacher_id) VALUES (?, ?)";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, title);
-            stmt.setString(2, description);
-            stmt.setInt(3, createdBy);
-            stmt.setBoolean(4, isActive);
-            return stmt.executeUpdate() > 0;
+            stmt.setInt(1, courseId);
+            stmt.setInt(2, teacherId);
+            stmt.executeUpdate();
         }
     }
 
@@ -184,5 +220,35 @@ public class AdminDAO {
                 return rs.next();
             }
         }
+    }
+
+    public boolean deleteCourse(int courseId) throws SQLException {
+        String sql = "DELETE FROM courses WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, courseId);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    public List<CourseWithTeacher> getAllCoursesWithTeachers() throws SQLException {
+        List<CourseWithTeacher> courses = new ArrayList<>();
+        String sql = "SELECT c.id, c.title, c.description, c.is_active, u.full_name AS teacher_name " +
+                "FROM courses c " +
+                "LEFT JOIN course_teachers ct ON c.id = ct.course_id " +
+                "LEFT JOIN users u ON ct.teacher_id = u.id";
+
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                courses.add(new CourseWithTeacher(
+                        rs.getInt("id"),
+                        rs.getString("title"),
+                        rs.getString("description"),
+                        rs.getString("teacher_name"),
+                        rs.getBoolean("is_active")
+                ));
+            }
+        }
+        return courses;
     }
 }

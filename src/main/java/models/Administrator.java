@@ -3,13 +3,16 @@ package models;
 import dao.AdminDAO;
 import dao.UserDAO;
 import db.DatabaseSetup;
+import models.additional.CourseWithTeacher;
 
 import java.sql.*;
+import java.util.List;
 import java.util.Scanner;
 
 public class Administrator extends User {
     private final Scanner scanner;
     private final AdminDAO adminDAO;
+    private final UserDAO userDAO;
     private boolean isActive;
 
     public Administrator(int id, String username, String password,
@@ -17,6 +20,7 @@ public class Administrator extends User {
         super(id, username, password, email, fullName, "ADMIN", true);
         this.scanner = new Scanner(System.in);
         this.adminDAO = new AdminDAO(connection);
+        this.userDAO = new UserDAO(connection);
         this.isActive = true;
     }
     public boolean isActive() { return isActive;}
@@ -41,7 +45,7 @@ public class Administrator extends User {
                 case 2 -> manageUsers();
                 case 3 -> monitorActivity();
                 case 4 -> {
-                    System.out.println("Выход из системы...");
+                    System.out.println("Выход из системы...\n\nРабота системы завершена. До свидания!");
                     System.exit(0);
                 }
                 default -> System.out.println("Неверный выбор!");
@@ -55,6 +59,8 @@ public class Administrator extends User {
         System.out.println("2. Редактировать курс");
         System.out.println("3. Активировать/деактивировать курс");
         System.out.println("4. Просмотреть все курсы");
+        System.out.println("5. Удалить курс");
+        System.out.println("6. Назад в меню администратора");
         System.out.print("Выберите действие: ");
 
         int action = scanner.nextInt();
@@ -65,25 +71,38 @@ public class Administrator extends User {
             case 2 -> editCourse();
             case 3 -> toggleCourseStatus();
             case 4 -> viewAllCourses();
+            case 5 -> deleteCourse();
+            case 6 -> {return;}
             default -> System.out.println("Неверный выбор!");
         }
     }
 
     private void createCourse() {
-        System.out.print("Введите название курса: ");
-        String title = scanner.nextLine();
-
-        System.out.print("Введите описание курса: ");
-        String description = scanner.nextLine();
-
-        System.out.print("Активен ли курс? (y/n): ");
-        boolean isActive = scanner.nextLine().equalsIgnoreCase("y");
-
         try {
-            if (adminDAO.createCourse(title, description, this.getId(), isActive)) {
-                System.out.println("Курс успешно создан!");
-            } else {
-                System.out.println("Не удалось создать курс");
+            List<User> teachers = userDAO.getTeachers();
+            System.out.println("\nСписок преподавателей:");
+            teachers.forEach(t -> System.out.printf("ID: %d | %s\n", t.getId(), t.getFullName()));
+
+            System.out.print("Введите ID преподавателя: ");
+            int teacherId = scanner.nextInt();
+            scanner.nextLine();
+
+            if (teachers.stream().noneMatch(t -> t.getId() == teacherId)) {
+                System.out.println("Преподаватель с таким ID не найден!");
+                return;
+            }
+
+            System.out.print("Введите название курса: ");
+            String title = scanner.nextLine();
+
+            System.out.print("Введите описание курса: ");
+            String description = scanner.nextLine();
+
+            System.out.print("Активен ли курс? (y/n): ");
+            boolean isActive = scanner.nextLine().equalsIgnoreCase("y");
+
+            if (adminDAO.createCourse(title, description, this.getId(), teacherId, isActive)) {
+                System.out.println("Курс успешно создан и привязан к преподавателю!");
             }
         } catch (SQLException e) {
             System.out.println("Ошибка при создании курса: " + e.getMessage());
@@ -132,17 +151,38 @@ public class Administrator extends User {
     private void viewAllCourses() {
         try {
             System.out.println("\nСписок всех курсов:");
-            System.out.println("ID | Название | Статус");
-            for (Course course : adminDAO.getAllCourses()) {
-                System.out.printf(
-                        "%d | %s | %s\n",
+            System.out.println("ID  | Название              | Преподаватель       | Статус");
+            for (CourseWithTeacher course : adminDAO.getAllCoursesWithTeachers()) {
+                System.out.printf("%-4d| %-20s | %-20s | %s%n",
                         course.getId(),
                         course.getTitle(),
-                        course.isActive() ? "Активен" : "Неактивен"
-                );
+                        course.getTeacherName() != null ? course.getTeacherName() : "Не назначен",
+                        course.isActive() ? "Активен" : "Неактивен");
             }
         } catch (SQLException e) {
             System.out.println("Ошибка при получении курсов: " + e.getMessage());
+        }
+    }
+
+    private void deleteCourse() {
+        try {
+            viewAllCourses();
+            System.out.print("\nВведите ID курса для удаления: ");
+            int courseId = scanner.nextInt();
+            scanner.nextLine();
+
+            System.out.print("Вы уверены, что хотите удалить курс? (y/n): ");
+            String confirmation = scanner.nextLine();
+
+            if (confirmation.equalsIgnoreCase("y")) {
+                if (adminDAO.deleteCourse(courseId)) {
+                    System.out.println("Курс успешно удален!");
+                } else {
+                    System.out.println("Курс с указанным ID не найден");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Ошибка при удалении курса: " + e.getMessage());
         }
     }
 
@@ -154,6 +194,7 @@ public class Administrator extends User {
         System.out.println("4. Блокировка/разблокировка");
         System.out.println("5. Удалить пользователя");
         System.out.println("6. Полное редактирование пользователя");
+        System.out.println("7. Назад в меню админстратора");
         System.out.print("Выберите действие: ");
 
         int action = scanner.nextInt();
@@ -166,6 +207,7 @@ public class Administrator extends User {
             case 4 -> toggleUserStatus();
             case 5 -> deleteUser();
             case 6 -> editUser();
+            case 7 -> {return;}
             default -> System.out.println("Неверный выбор!");
         }
     }
@@ -335,6 +377,7 @@ public class Administrator extends User {
         System.out.println("1. Статистика платформы");
         System.out.println("2. Логи действий");
         System.out.println("3. Активные пользователи");
+        System.out.println("4. Назад в меню администратора");
         System.out.print("Выберите действие: ");
 
         int action = scanner.nextInt();
@@ -344,6 +387,7 @@ public class Administrator extends User {
             case 1 -> viewPlatformStats();
             case 2 -> viewActivityLogs();
             case 3 -> viewActiveUsers();
+            case 4 -> {return;}
             default -> System.out.println("Неверный выбор!");
         }
     }

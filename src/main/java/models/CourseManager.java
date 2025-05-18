@@ -21,7 +21,7 @@ public class CourseManager extends User {
     @Override
     public void showMenu() {
         while (true) {
-            System.out.println("\n=== МЕНЮ МЕНЕДЖЕРА КУРСОВ ===");
+            System.out.println("\n*** МЕНЮ МЕНЕДЖЕРА КУРСОВ ***");
             System.out.println("1. Управление расписанием");
             System.out.println("2. Мониторинг курсов");
             System.out.println("3. Анализ успеваемости");
@@ -40,8 +40,8 @@ public class CourseManager extends User {
                 case 4 -> generateReports();
                 case 5 -> manageCertificates();
                 case 6 -> {
-                    System.out.println("Выход из системы...");
-                    return;
+                    System.out.println("Выход из системы...\n\nРабота системы завершена. До свидания!");
+                    System.exit(0);
                 }
                 default -> System.out.println("Неверный выбор!");
             }
@@ -49,7 +49,7 @@ public class CourseManager extends User {
     }
 
     private void manageSchedule() {
-        System.out.println("\n--- Управление расписанием ---");
+        System.out.println("\n*** Управление расписанием ***");
         System.out.println("1. Просмотр расписания");
         System.out.println("2. Добавить событие");
         System.out.println("3. Удалить событие");
@@ -145,20 +145,40 @@ public class CourseManager extends User {
     }
 
     private void analyzePerformance() {
+        System.out.println("*** Анализ успеваемости ***");
         try {
-            System.out.print("Введите ID курса для анализа: ");
+            System.out.println("\nСписок доступных курсов:");
+            List<CourseWithTeacher> courses = managerDAO.getAllCoursesWithTeachers();
+            System.out.println("ID  | Название курса          | Преподаватель");
+            for (CourseWithTeacher course : courses) {
+                System.out.printf("%-4d| %-20s | %-20s\n",
+                        course.getId(),
+                        course.getTitle(),
+                        course.getTeacherName() != null ? course.getTeacherName() : "Не назначен");
+            }
+            System.out.print("\nВведите ID курса для анализа: ");
             int courseId = scanner.nextInt();
             scanner.nextLine();
 
+            if (courses.stream().noneMatch(c -> c.getId() == courseId)) {
+                System.out.println("Курс с указанным ID не найден!");
+                return;
+            }
+
             List<StudentProgress> progress = managerDAO.getStudentProgress(courseId);
             System.out.println("\nУспеваемость студентов:");
-            System.out.println("ID | Студент | Средний балл");
+            System.out.println("----------------------------------------");
+            System.out.printf("%-8s | %-20s | %-10s\n", "ID", "Студент", "Ср. балл");
+            System.out.println("----------------------------------------");
+
             for (StudentProgress p : progress) {
-                System.out.printf("%d | %s | %.2f\n",
+                System.out.printf("%-8d | %-20s | %-10.2f\n",
                         p.getStudentId(),
                         p.getStudentName(),
                         p.getAverageScore());
             }
+            System.out.println("----------------------------------------");
+
         } catch (SQLException e) {
             System.out.println("Ошибка при анализе успеваемости: " + e.getMessage());
         }

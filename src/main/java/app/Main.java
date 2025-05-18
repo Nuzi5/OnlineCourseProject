@@ -51,13 +51,10 @@ public class Main {
                         login();
                         isValidInput = true;
                     }
-                    case 2 -> {
-                        registerStudent();
-                        isValidInput = true;
-                    }
+                    case 2 -> registerStudent();
                     case 3 -> {
-                        exitSystem();
-                        isValidInput = true;
+                        System.out.println("Работа системы завершена. До свидания!");
+                        System.exit(0);
                     }
                     default -> System.out.println("Неверный выбор! Попробуйте снова:");
                 }
@@ -68,11 +65,6 @@ public class Main {
                 System.out.println("Произошла ошибка: " + e.getMessage());
                 scanner.nextLine();
             }}
-    }
-
-    private static void exitSystem() {
-        System.out.println("\nРабота системы завершена. До свидания!");
-        System.exit(0);
     }
 
     private static int readIntInput() {

@@ -134,4 +134,17 @@ public class UserDAO {
             case "MANAGER" -> new CourseManager(id, username, password, email, fullName, connection);
             default -> throw new IllegalArgumentException("Unknown role: " + role);
         };}
+
+    public List<User> getTeachers() throws SQLException {
+        List<User> teachers = new ArrayList<>();
+        String sql = "SELECT * FROM users WHERE role = 'TEACHER'";
+
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                teachers.add(createUserFromResultSet(rs));
+            }
+        }
+        return teachers;
+    }
 }

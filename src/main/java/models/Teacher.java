@@ -21,7 +21,7 @@ public class Teacher extends User {
     @Override
     public void showMenu() {
         while (true) {
-            System.out.println("\n=== МЕНЮ ПРЕПОДАВАТЕЛЯ ===");
+            System.out.println("\n*** МЕНЮ ПРЕПОДАВАТЕЛЯ ***");
             System.out.println("1. Мои курсы");
             System.out.println("2. Управление заданиями");
             System.out.println("3. Проверка работ студентов");
@@ -38,8 +38,8 @@ public class Teacher extends User {
                 case 3 -> reviewStudentWork();
                 case 4 -> manageTests();
                 case 5 -> {
-                    System.out.println("Выход из системы...");
-                    return;
+                    System.out.println("\nВыход из системы...\n\nРабота системы завершена. До свидания!");
+                    System.exit(0);
                 }
                 default -> System.out.println("Неверный выбор!");
             }
@@ -51,10 +51,12 @@ public class Teacher extends User {
             List<Course> courses = teacherDAO.getTeacherCourses(this.getId());
             System.out.println("\nМои курсы:");
             for (Course course : courses) {
-                System.out.printf("ID: %d | Название: %s | %s\n",
+                System.out.printf("ID: %d | %s | %s | %s\n",
                         course.getId(),
                         course.getTitle(),
-                        course.isActive() ? "Активен" : "Неактивен");
+                        course.getDescription(),
+                        course.isActive() ? "Активен" : "Неактивен"
+                );
             }
         } catch (SQLException e) {
             System.out.println("Ошибка при получении курсов: " + e.getMessage());

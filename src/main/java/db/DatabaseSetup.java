@@ -48,6 +48,9 @@ public class DatabaseSetup {
                 createDefaultUsers(dbStmt);
                 createCourseTeachersTable(dbStmt);
                 createActivityLogsTable(dbStmt);
+                createTestAnswersTable(dbStmt);
+                createTextAnswerGradesTable(dbStmt);
+                createTestQuestionsTable(dbStmt);
 
                 updateUserTable(dbStmt);
                 updateTestTable(dbStmt);
@@ -377,6 +380,17 @@ public class DatabaseSetup {
                 "FOREIGN KEY (graded_by) REFERENCES users(id)" +
                 ")";
         executeStatement(stmt, sql, "text_answer_grades");
+    }
+
+    private static void createTestQuestionsTable(Statement stmt) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS test_questions ("
+                + "id INT AUTO_INCREMENT PRIMARY KEY,"
+                + "test_id INT NOT NULL,"
+                + "question_text TEXT NOT NULL,"
+                + "question_type VARCHAR(20) NOT NULL CHECK (question_type IN ('single_choice', 'multiple_choice', 'text_answer')),"
+                + "points INT DEFAULT 1,"
+                + "FOREIGN KEY (test_id) REFERENCES tests(id) ON DELETE CASCADE)";
+        executeStatement(stmt, sql, "test_questions");
     }
 
 }
