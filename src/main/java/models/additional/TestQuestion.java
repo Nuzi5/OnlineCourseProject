@@ -1,4 +1,4 @@
-package models;
+package models.additional;
 
 public class TestQuestion {
     private final int id;

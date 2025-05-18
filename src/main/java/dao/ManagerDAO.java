@@ -1,6 +1,7 @@
 package dao;
 
 import models.*;
+import models.additional.*;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -9,8 +10,7 @@ public class ManagerDAO {
     private final Connection connection;
 
     public ManagerDAO(Connection connection) {
-        this.connection = connection;
-    }
+        this.connection = connection;}
 
     public List<ScheduleEvent> getScheduleEvents(int courseId) throws SQLException {
         List<ScheduleEvent> events = new ArrayList<>();
@@ -29,8 +29,7 @@ public class ManagerDAO {
                         rs.getTimestamp("event_time").toLocalDateTime(),
                         0
                 ));
-            }
-        }
+            }}
         return events;
     }
 
@@ -71,8 +70,7 @@ public class ManagerDAO {
                         rs.getString("title"),
                         rs.getInt("students_count")
                 ));
-            }
-        }
+            }}
         return stats;
     }
 
@@ -94,8 +92,7 @@ public class ManagerDAO {
                         rs.getString("full_name"),
                         rs.getDouble("avg_score")
                 ));
-            }
-        }
+            }}
         return progressList;
     }
 
@@ -119,8 +116,7 @@ public class ManagerDAO {
                         rs.getInt("final_score"),
                         rs.getString("full_name")
                 ));
-            }
-        }
+            }}
         return certificates;
     }
 
@@ -156,8 +152,7 @@ public class ManagerDAO {
                         rs.getInt("student_count"),
                         rs.getDouble("avg_score")
                 );
-            }
-        }
+            }}
         return null;
     }
 
@@ -177,8 +172,7 @@ public class ManagerDAO {
                         rs.getInt("enrollment_count"),
                         rs.getInt("certificate_count")
                 );
-            }
-        }
+            }}
         return null;
     }
 }

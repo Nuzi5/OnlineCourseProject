@@ -1,56 +1,60 @@
 package db;
-
 import java.sql.*;
 
 public class DatabaseSetup {
-    private static final String URL = "jdbc:mysql://localhost:3306/education_platform";
+    private static final String ROOT_URL = "jdbc:mysql://localhost:3306/";
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/education_platform";
     private static final String USER = "root";
     private static final String PASSWORD = "Nurzat211125";
+    public static final String DB_NAME = "education_platform";
     private static boolean silentMode = true;
 
     public static Connection getConnection() throws SQLException {
-        try {
-            return DriverManager.getConnection(URL, USER, PASSWORD);
-        } catch (SQLException e) {
-            System.err.println("Ошибка подключения к базе данных: " + e.getMessage());
-            throw e;
-        }
+        return DriverManager.getConnection(DB_URL, USER, PASSWORD);
     }
 
     public static void initDatabase() {
-        initDatabase(true);
-    }
+        initDatabase(true);}
 
     public static void initDatabase(boolean silent) {
         silentMode = silent;
-        Connection conn = null;
-        Statement stmt = null;
+        Connection rootConn = null;
+        Statement rootStmt = null;
 
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            conn = getConnection();
-            stmt = conn.createStatement();
+            rootConn = DriverManager.getConnection(ROOT_URL, USER, PASSWORD);
+            rootStmt = rootConn.createStatement();
 
-            createUserTable(stmt);
-            createCourseTable(stmt);
-            createEnrollmentTable(stmt);
-            createAssignmentTable(stmt);
-            createAssignmentSubmissionsTable(stmt);
-            createTestTables(stmt);
-            createTestResultsTable(stmt);
-            createWebinarTable(stmt);
-            createCertificateTable(stmt);
-            createCourseMaterialsTable(stmt);
-            createScheduleEventsTable(stmt);
-            createDefaultUsers(stmt);
-            createCourseTeachersTable(stmt);
-            createActivityLogsTable(stmt);
+            rootStmt.executeUpdate("CREATE DATABASE IF NOT EXISTS " + DB_NAME);
 
-            updateUserTable(stmt);
-            updateTestTable(stmt);
+            rootStmt.close();
+            rootConn.close();
 
-            if (!silentMode) {
-                System.out.println("База данных успешно инициализирована.");
+            try (Connection dbConn = getConnection();
+                 Statement dbStmt = dbConn.createStatement()) {
+
+                createUserTable(dbStmt);
+                createCourseTable(dbStmt);
+                createEnrollmentTable(dbStmt);
+                createAssignmentTable(dbStmt);
+                createAssignmentSubmissionsTable(dbStmt);
+                createTestTables(dbStmt);
+                createTestResultsTable(dbStmt);
+                createWebinarTable(dbStmt);
+                createCertificateTable(dbStmt);
+                createCourseMaterialsTable(dbStmt);
+                createScheduleEventsTable(dbStmt);
+                createDefaultUsers(dbStmt);
+                createCourseTeachersTable(dbStmt);
+                createActivityLogsTable(dbStmt);
+
+                updateUserTable(dbStmt);
+                updateTestTable(dbStmt);
+
+                if (!silentMode) {
+                    System.out.println("База данных успешно инициализирована.");
+                }
             }
 
         } catch (ClassNotFoundException e) {
@@ -61,8 +65,8 @@ public class DatabaseSetup {
             e.printStackTrace();
         } finally {
             try {
-                if (stmt != null) stmt.close();
-                if (conn != null) conn.close();
+                if (rootStmt != null) rootStmt.close();
+                if (rootConn != null) rootConn.close();
             } catch (SQLException e) {
                 System.err.println("Ошибка при закрытии соединения:");
                 e.printStackTrace();
@@ -221,22 +225,15 @@ public class DatabaseSetup {
     }
 
     private static void createDefaultUsers(Statement stmt) throws SQLException {
-        String adminSql = "INSERT IGNORE INTO users (username, password, email, full_name, role) VALUES " +
-                "('admin', 'admin123', 'admin@g.com', 'Администратор', 'ADMIN')";
+        String sql = "INSERT IGNORE INTO users (id, username, password, email, full_name, role) VALUES "
+                + "(1, 'admin', 'admin123', 'admin@g.com', 'Администратор', 'ADMIN'),"
+                + "(2, 'teacher', 'teacher123', 'teacher@g.com', 'Преподаватель 1', 'TEACHER'),"
+                + "(3, 'manager', 'manager123', 'manager@g.com', 'Менеджер 1', 'MANAGER'),"
+                + "(4, 'student', 'student123', 'student@g.com', 'Студент 1', 'STUDENT')";
 
-        String teacherSql = "INSERT IGNORE INTO users (username, password, email, full_name, role) VALUES " +
-                "('teacher', 'teacher123', 'teacher@g.com', 'Преподаватель 1', 'TEACHER')";
+        stmt.executeUpdate(sql);
 
-        String managerSql = "INSERT IGNORE INTO users (username, password, email, full_name, role) VALUES " +
-                "('manager', 'manager123', 'manager@g.com', 'Менеджер 1', 'MANAGER')";
-
-        String studentSql = "INSERT IGNORE INTO users (username, password, email, full_name, role) VALUES " +
-                "('student', 'student123', 'student@g.com', 'Студент 1', 'STUDENT')";
-
-        stmt.executeUpdate(adminSql);
-        stmt.executeUpdate(teacherSql);
-        stmt.executeUpdate(managerSql);
-        stmt.executeUpdate(studentSql);
+        stmt.execute("ALTER TABLE users AUTO_INCREMENT = 5");
     }
 
     private static void executeStatement(Statement stmt, String sql, String tableName) throws SQLException {

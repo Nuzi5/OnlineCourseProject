@@ -1,4 +1,4 @@
-package models;
+package models.additional;
 
 public class PlatformReport {
     private final int userCount;

@@ -11,9 +11,6 @@ public class Course {
         if (title == null || title.trim().isEmpty()) {
             throw new IllegalArgumentException("Title cannot be empty");
         }
-        if (createdBy <= 0) {
-            throw new IllegalArgumentException("Invalid creator ID");
-        }
         this.id = id;
         this.title = title.trim();
         this.description = description;

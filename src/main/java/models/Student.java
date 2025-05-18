@@ -1,6 +1,7 @@
 package models;
 
 import dao.StudentDAO;
+import models.additional.*;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -20,7 +21,7 @@ public class Student extends User {
     @Override
     public void showMenu() {
         while (true) {
-            System.out.println("\n=== МЕНЮ СТУДЕНТА ===");
+            System.out.println("\n*** МЕНЮ СТУДЕНТА ***");
             System.out.println("1. Доступные курсы");
             System.out.println("2. Мои курсы");
             System.out.println("3. Задания и тесты");
@@ -41,8 +42,8 @@ public class Student extends User {
                 case 5 -> viewProgress();
                 case 6 -> viewMyCertificates();
                 case 7 -> {
-                    System.out.println("Выход из системы...");
-                    return;
+                    System.out.println("\nВыход из системы...");
+                    System.exit(0);
                 }
                 default -> System.out.println("Неверный выбор!");
             }

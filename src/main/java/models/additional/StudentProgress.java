@@ -1,4 +1,4 @@
-package models;
+package models.additional;
 
 public class StudentProgress {
     private final int studentId;

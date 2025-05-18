@@ -1,4 +1,4 @@
-package models;
+package models.additional;
 
 public class AnswerOption {
     private final int id;

@@ -1,6 +1,7 @@
 package models;
 
 import dao.TeacherDAO;
+import models.additional.*;
 
 import java.sql.*;
 import java.util.*;
@@ -264,7 +265,7 @@ public class Teacher extends User {
             int testId = scanner.nextInt();
             scanner.nextLine();
 
-            List<models.TestResult> results = teacherDAO.getTestResults(testId);
+            List<TestResult> results = teacherDAO.getTestResults(testId);
             if (results.isEmpty()) {
                 System.out.println("По этому тесту пока нет результатов");
                 return;
@@ -276,7 +277,7 @@ public class Teacher extends User {
                     "Студент", "Баллы", "Статус", "Дата");
             System.out.println("--------------------------------------------------");
 
-            for (models.TestResult result : results) {
+            for (TestResult result : results) {
                 System.out.printf("%-20s %-10d %-10s %-10s\n",
                         result.getStudentName(),
                         result.getScore(),
@@ -285,12 +286,12 @@ public class Teacher extends User {
             }
 
             double avgScore = results.stream()
-                    .mapToInt(models.TestResult::getScore)
+                    .mapToInt(TestResult::getScore)
                     .average()
                     .orElse(0);
 
             long passedCount = results.stream()
-                    .filter(models.TestResult::isPassed)
+                    .filter(TestResult::isPassed)
                     .count();
 
             System.out.println("\nСтатистика:");

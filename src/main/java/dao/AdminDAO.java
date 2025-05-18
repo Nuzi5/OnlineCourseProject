@@ -1,7 +1,6 @@
 package dao;
 
 import models.*;
-
 import java.sql.*;
 import java.util.*;
 
@@ -9,8 +8,7 @@ public class AdminDAO {
     private final Connection connection;
 
     public AdminDAO(Connection connection) {
-        this.connection = connection;
-    }
+        this.connection = connection;}
 
     public boolean createCourse(String title, String description, int createdBy, boolean isActive) throws SQLException {
         String sql = "INSERT INTO courses (title, description, created_by, is_active) VALUES (?, ?, ?, ?)";
@@ -72,8 +70,7 @@ public class AdminDAO {
                         rs.getInt("created_by"),
                         rs.getBoolean("is_active")
                 ));
-            }
-        }
+            }}
         return courses;
     }
 
@@ -87,8 +84,7 @@ public class AdminDAO {
                 User user = createUserFromResultSet(rs);
                 user.setActive(rs.getBoolean("is_active"));
                 users.add(user);
-            }
-        }
+            }}
         return users;
     }
 
@@ -106,20 +102,6 @@ public class AdminDAO {
             case "MANAGER" -> new CourseManager(id, username, "", email, fullName, connection);
             default -> throw new SQLException("Unknown role: " + role);
         };
-    }
-
-    public boolean createUser(String username, String password, String email,
-                              String fullName, String role, boolean isActive) throws SQLException {
-        String sql = "INSERT INTO users (username, password, email, full_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, username);
-            stmt.setString(2, password);
-            stmt.setString(3, email);
-            stmt.setString(4, fullName);
-            stmt.setString(5, role);
-            stmt.setBoolean(6, isActive);
-            return stmt.executeUpdate() > 0;
-        }
     }
 
     public boolean updateUserRole(int userId, String newRole) throws SQLException {

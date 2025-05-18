@@ -3,25 +3,27 @@ package app;
 import db.*;
 import models.*;
 import dao.*;
-
 import java.sql.*;
 import java.util.*;
 
 public class Main {
     private static final Scanner scanner = new Scanner(System.in);
     private static User currentUser = null;
-
     private static UserDAO userDAO;
 
     public static void main(String[] args) {
-        initializeDatabaseAndDAOs();
-        showMainMenu();
+        try {
+            DatabaseSetup.initDatabase();
+            DatabaseMigrator.applyMigrations();
+            initializeDatabaseAndDAOs();
+            showMainMenu();
+        } catch (Exception e) {
+            System.err.println("Критическая ошибка при запуске: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
-    private static void initializeDatabaseAndDAOs() {
-        DatabaseSetup.initDatabase();
-        DatabaseMigrator.applyMigrations();
-
+    public static void initializeDatabaseAndDAOs() {
         try {
             Connection connection = DatabaseSetup.getConnection();
             userDAO = new UserDAO(connection);
@@ -31,7 +33,7 @@ public class Main {
         }
     }
 
-    private static void showMainMenu() {
+    public static void showMainMenu() {
         boolean isValidInput = false;
 
         while (!isValidInput) {
@@ -44,7 +46,6 @@ public class Main {
 
                 int choice = readIntInput();
                 scanner.nextLine();
-
                 switch (choice) {
                     case 1 -> {
                         login();
@@ -66,8 +67,7 @@ public class Main {
             } catch (Exception e) {
                 System.out.println("Произошла ошибка: " + e.getMessage());
                 scanner.nextLine();
-            }
-        }
+            }}
     }
 
     private static void exitSystem() {
@@ -82,8 +82,7 @@ public class Main {
             } catch (InputMismatchException e) {
                 System.out.println("Ошибка: введите число!");
                 scanner.nextLine();
-            }
-        }
+            }}
     }
 
     private static void login() {
@@ -120,23 +119,22 @@ public class Main {
                     password,
                     email,
                     fullName,
-                    "STUDENT" ,
+                    "STUDENT",
                     true
             );
 
-            Student student = new Student(
-                    newId,
-                    username,
-                    password,
-                    email,
-                    fullName,
-                    DatabaseSetup.getConnection()
-            );
             System.out.println("Студент успешно зарегистрирован! ID: " + newId);
 
         } catch (SQLException e) {
             System.err.println("Ошибка регистрации: " + e.getMessage());
-            e.printStackTrace();
+
+            if (e.getMessage().contains("Duplicate entry")) {
+                if (e.getMessage().contains("username")) {
+                    System.err.println("Логин уже занят!");
+                } else if (e.getMessage().contains("email")) {
+                    System.err.println("Email уже используется!");
+                }
+            }
         }
     }
 

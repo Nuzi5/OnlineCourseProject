@@ -1,7 +1,7 @@
 package dao;
 
 import models.*;
-
+import models.additional.*;
 import java.sql.*;
 import java.util.*;
 
@@ -31,8 +31,7 @@ public class TeacherDAO {
                         teacherId,
                         rs.getBoolean("is_active")
                 ));
-            }
-        }
+            }}
         return courses;
     }
 
@@ -54,8 +53,7 @@ public class TeacherDAO {
                         rs.getTimestamp("deadline").toLocalDateTime(),
                         rs.getInt("max_score")
                 ));
-            }
-        }
+            }}
         return assignments;
     }
 
@@ -81,8 +79,7 @@ public class TeacherDAO {
                         rs.getInt("score"),
                         rs.getString("full_name")
                 ));
-            }
-        }
+            }}
         return submissions;
     }
 
@@ -117,8 +114,7 @@ public class TeacherDAO {
                         rs.getInt("time_limit"),
                         rs.getInt("passing_score")
                 ));
-            }
-        }
+            }}
         return tests;
     }
 
@@ -142,8 +138,7 @@ public class TeacherDAO {
                     return generatedKeys.getInt(1);
                 } else {
                     throw new SQLException("Не удалось получить ID созданного теста");
-                }
-            }
+                }}
         }
     }
     public boolean addTestQuestion(int testId, String questionText, String questionType, int points) throws SQLException {
@@ -173,8 +168,8 @@ public class TeacherDAO {
         }
     }
 
-    public List<models.TestResult> getTestResults(int testId) throws SQLException {
-        List<models.TestResult> results = new ArrayList<>();
+    public List<TestResult> getTestResults(int testId) throws SQLException {
+        List<TestResult> results = new ArrayList<>();
         String sql = "SELECT tr.id, u.full_name, tr.score, tr.passing_score, tr.completed_at " +
                 "FROM test_results tr " +
                 "JOIN users u ON tr.student_id = u.id " +
@@ -185,7 +180,7 @@ public class TeacherDAO {
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                results.add(new models.TestResult(
+                results.add(new TestResult(
                         rs.getInt("id"),
                         testId,
                         rs.getInt("student_id"),
@@ -194,8 +189,7 @@ public class TeacherDAO {
                         rs.getInt("passing_score"),
                         rs.getTimestamp("completed_at").toLocalDateTime()
                 ));
-            }
-        }
+            }}
         return results;
     }
 
@@ -216,8 +210,7 @@ public class TeacherDAO {
                         rs.getString("question_type"),
                         rs.getInt("points")
                 ));
-            }
-        }
+            }}
         return questions;
     }
 
@@ -236,8 +229,7 @@ public class TeacherDAO {
                         rs.getString("option_text"),
                         rs.getBoolean("is_correct")
                 ));
-            }
-        }
+            }}
         return options;
     }
 
@@ -254,8 +246,7 @@ public class TeacherDAO {
 
             while (rs.next()) {
                 tests.add(new Test(rs.getInt("id"), rs.getString("title")));
-            }
-        }
+            }}
         return tests;
     }
 
@@ -282,8 +273,7 @@ public class TeacherDAO {
                         rs.getString("answer"),
                         rs.getInt("max_points")
                 ));
-            }
-        }
+            }}
         return answers;
     }
 
@@ -296,6 +286,5 @@ public class TeacherDAO {
             stmt.setInt(2, score);
             stmt.setInt(3, teacherId);
             return stmt.executeUpdate() > 0;
-        }
-    }
+        }}
 }

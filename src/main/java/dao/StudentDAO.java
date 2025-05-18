@@ -1,6 +1,7 @@
 package dao;
 
 import models.*;
+import models.additional.*;
 import java.sql.*;
 import java.util.*;
 
@@ -15,7 +16,7 @@ public class StudentDAO {
         List<Course> courses = new ArrayList<>();
         String sql = "SELECT id, title, description FROM courses " +
                 "WHERE is_active = true AND id NOT IN " +
-                "(SELECT course_id FROM enrollments WHERE student_id = ?)";
+                "(SELECT course_id FROM enrollments WHERE user_id = ?)";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, studentId);
@@ -29,13 +30,12 @@ public class StudentDAO {
                         0,
                         true
                 ));
-            }
-        }
+            }}
         return courses;
     }
 
     public boolean enrollInCourse(int studentId, int courseId) throws SQLException {
-        String sql = "INSERT INTO enrollments (student_id, course_id, enrolled_at) " +
+        String sql = "INSERT INTO enrollments (user_id, course_id, enrolled_at) " +
                 "VALUES (?, ?, CURRENT_TIMESTAMP)";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
@@ -49,7 +49,7 @@ public class StudentDAO {
         List<Course> courses = new ArrayList<>();
         String sql = "SELECT c.id, c.title, c.description FROM courses c " +
                 "JOIN enrollments e ON c.id = e.course_id " +
-                "WHERE e.student_id = ?";
+                "WHERE e.user_id = ?";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, studentId);
@@ -63,8 +63,7 @@ public class StudentDAO {
                         0,
                         true
                 ));
-            }
-        }
+            }}
         return courses;
     }
 
@@ -72,7 +71,7 @@ public class StudentDAO {
         List<Assignment> assignments = new ArrayList<>();
         String sql = "SELECT a.id, a.title, a.description, a.deadline, a.max_score, " +
                 "s.score, s.submitted_at FROM assignments a " +
-                "LEFT JOIN assignment_submissions s ON a.id = s.assignment_id AND s.student_id = ? " +
+                "LEFT JOIN assignment_submissions s ON a.id = s.assignment_id AND s.user_id = ? " +
                 "WHERE a.course_id = ?";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
@@ -92,14 +91,13 @@ public class StudentDAO {
                         rs.getTimestamp("submitted_at") != null ?
                                 rs.getTimestamp("submitted_at").toLocalDateTime() : null
                 ));
-            }
-        }
+            }}
         return assignments;
     }
 
     public boolean submitAssignment(int assignmentId, int studentId, String answer) throws SQLException {
         String sql = "INSERT INTO assignment_submissions " +
-                "(assignment_id, student_id, answer, submitted_at) " +
+                "(assignment_id, user_id, answer, submitted_at) " +
                 "VALUES (?, ?, ?, CURRENT_TIMESTAMP) " +
                 "ON DUPLICATE KEY UPDATE answer = VALUES(answer), submitted_at = VALUES(submitted_at)";
 
@@ -115,7 +113,7 @@ public class StudentDAO {
         List<Test> tests = new ArrayList<>();
         String sql = "SELECT t.id, t.title, t.description, t.time_limit, t.passing_score, " +
                 "tr.score FROM tests t " +
-                "LEFT JOIN test_results tr ON t.id = tr.test_id AND tr.student_id = ? " +
+                "LEFT JOIN test_results tr ON t.id = tr.test_id AND tr.user_id = ? " +
                 "WHERE t.course_id = ?";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
@@ -133,8 +131,7 @@ public class StudentDAO {
                         rs.getInt("passing_score"),
                         rs.getInt("score")
                 ));
-            }
-        }
+            }}
         return tests;
     }
 
@@ -155,8 +152,7 @@ public class StudentDAO {
                         rs.getInt("time_limit"),
                         rs.getInt("passing_score")
                 );
-            }
-        }
+            }}
         return null;
     }
 
@@ -176,7 +172,7 @@ public class StudentDAO {
     public boolean saveTestResult(int studentId, int testId, int score,
                                   int passingScore, Map<Integer, String> answers) throws SQLException {
         String resultSql = "INSERT INTO test_results " +
-                "(student_id, test_id, score, passing_score, completed_at) " +
+                "(user_id, test_id, score, passing_score, completed_at) " +
                 "VALUES (?, ?, ?, ?, NOW()) " +
                 "ON DUPLICATE KEY UPDATE score = VALUES(score), completed_at = VALUES(completed_at)";
 
@@ -205,7 +201,6 @@ public class StudentDAO {
                 answersStmt.addBatch();
             }
             answersStmt.executeBatch();
-
             return true;
         }
     }
@@ -227,8 +222,7 @@ public class StudentDAO {
                         rs.getString("question_type"),
                         rs.getInt("points")
                 ));
-            }
-        }
+            }}
         return questions;
     }
 
@@ -247,14 +241,13 @@ public class StudentDAO {
                         rs.getString("option_text"),
                         rs.getBoolean("is_correct")
                 ));
-            }
-        }
+            }}
         return options;
     }
 
     public boolean saveTestResult(int studentId, int testId, int score, int passingScore) throws SQLException {
         String sql = "INSERT INTO test_results " +
-                "(student_id, test_id, score, passing_score, completed_at) " +
+                "(user_id, test_id, score, passing_score, completed_at) " +
                 "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) " +
                 "ON DUPLICATE KEY UPDATE score = VALUES(score), completed_at = VALUES(completed_at)";
 
@@ -272,7 +265,7 @@ public class StudentDAO {
         String sql = "SELECT w.id, w.title, w.scheduled_at, c.title as course_title " +
                 "FROM webinars w " +
                 "JOIN courses c ON w.course_id = c.id " +
-                "WHERE w.course_id IN (SELECT course_id FROM enrollments WHERE student_id = ?) " +
+                "WHERE w.course_id IN (SELECT course_id FROM enrollments WHERE user_id = ?) " +
                 "AND w.was_conducted = false " +
                 "AND w.scheduled_at > NOW() " +
                 "ORDER BY w.scheduled_at";
@@ -288,8 +281,7 @@ public class StudentDAO {
                         rs.getTimestamp("scheduled_at").toLocalDateTime(),
                         rs.getString("course_title")
                 ));
-            }
-        }
+            }}
         return webinars;
     }
 
@@ -298,7 +290,7 @@ public class StudentDAO {
         String sql = "SELECT c.id, co.title as course_name, c.issue_date, c.final_score " +
                 "FROM certificates c " +
                 "JOIN courses co ON c.course_id = co.id " +
-                "WHERE c.student_id = ?";
+                "WHERE c.user_id = ?";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, studentId);
@@ -313,8 +305,7 @@ public class StudentDAO {
                         rs.getInt("final_score"),
                         rs.getString("course_name")
                 ));
-            }
-        }
+            }}
         return certificates;
     }
 
@@ -325,11 +316,11 @@ public class StudentDAO {
                 "COALESCE(AVG(t.score), 0) as avg_test_score " +
                 "FROM enrollments e " +
                 "JOIN courses c ON e.course_id = c.id " +
-                "LEFT JOIN assignment_submissions a ON a.student_id = e.student_id AND " +
+                "LEFT JOIN assignment_submissions a ON a.user_id = e.user_id AND " +
                 "a.assignment_id IN (SELECT id FROM assignments WHERE course_id = c.id) " +
-                "LEFT JOIN test_results t ON t.student_id = e.student_id AND " +
+                "LEFT JOIN test_results t ON t.user_id = e.user_id AND " +
                 "t.test_id IN (SELECT id FROM tests WHERE course_id = c.id) " +
-                "WHERE e.student_id = ? " +
+                "WHERE e.user_id = ? " +
                 "GROUP BY c.title";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
@@ -341,8 +332,7 @@ public class StudentDAO {
                         rs.getString("title"),
                         (rs.getDouble("avg_assignment_score") + rs.getDouble("avg_test_score")) / 2
                 );
-            }
-        }
+            }}
         return progress;
     }
 }

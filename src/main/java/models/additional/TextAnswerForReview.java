@@ -1,4 +1,4 @@
-package models;
+package models.additional;
 
 public class TextAnswerForReview {
     private final int answerId;

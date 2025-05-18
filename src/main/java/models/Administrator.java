@@ -42,7 +42,7 @@ public class Administrator extends User {
                 case 3 -> monitorActivity();
                 case 4 -> {
                     System.out.println("Выход из системы...");
-                    return;
+                    System.exit(0);
                 }
                 default -> System.out.println("Неверный выбор!");
             }
