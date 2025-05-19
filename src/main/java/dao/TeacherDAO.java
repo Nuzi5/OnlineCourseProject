@@ -132,28 +132,47 @@ public class TeacherDAO {
             stmt.setObject(5, passingScore);
             stmt.setInt(6, createdBy);
 
-            stmt.executeUpdate();
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                connection.rollback();
+                throw new SQLException("Не удалось создать тест");
+            }
 
             try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     return generatedKeys.getInt(1);
                 } else {
+                    connection.rollback();
                     throw new SQLException("Не удалось получить ID созданного теста");
-                }}
+                }
+            }
         }
     }
-    public boolean addTestQuestion(int testId, String questionText, String questionType, int points) throws SQLException {
+    public int addTestQuestion(int testId, String questionText, String questionType, int points) throws SQLException {
         String sql = "INSERT INTO test_questions (test_id, question_text, question_type, points) VALUES (?, ?, ?, ?)";
 
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, testId);
             stmt.setString(2, questionText);
             stmt.setString(3, questionType);
             stmt.setInt(4, points);
 
-            return stmt.executeUpdate() > 0;
+            int affectedRows = stmt.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Не удалось добавить вопрос");
+            }
+
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    return generatedKeys.getInt(1);
+                } else {
+                    throw new SQLException("Не удалось получить ID вопроса");
+                }
+            }
         }
     }
+
 
     public boolean addAnswerOption(int questionId, String optionText, boolean isCorrect) throws SQLException {
         String sql = "INSERT INTO answer_options (question_id, option_text, is_correct) " +

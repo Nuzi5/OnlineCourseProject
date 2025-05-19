@@ -1,6 +1,7 @@
 package models;
 
 import dao.TeacherDAO;
+import db.DatabaseSetup;
 import models.additional.*;
 
 import java.sql.*;
@@ -192,8 +193,14 @@ public class Teacher extends User {
         }
     }
 
-    private void createTest(int courseId) {
+    public void createTest(int courseId) {
+        Connection connection = null;
         try {
+            connection = DatabaseSetup.getConnection();
+            connection.setAutoCommit(false);
+
+            TeacherDAO teacherDAO = new TeacherDAO(connection);
+
             System.out.print("Введите название теста: ");
             String title = scanner.nextLine();
 
@@ -210,7 +217,6 @@ public class Teacher extends User {
             int createdBy = this.getId();
 
             int testId = teacherDAO.createTest(courseId, title, description, timeLimit, passingScore, createdBy);
-            System.out.println("Тест создан с ID: " + testId);
 
             while (true) {
                 System.out.println("\nДобавление вопроса (q - закончить)");
@@ -226,7 +232,7 @@ public class Teacher extends User {
                 int points = scanner.nextInt();
                 scanner.nextLine();
 
-                teacherDAO.addTestQuestion(testId, questionText, questionType, points);
+                int questionId = teacherDAO.addTestQuestion(testId, questionText, questionType, points);
 
                 if (!questionType.equalsIgnoreCase("text")) {
                     System.out.println("Добавление вариантов ответа (q - закончить)");
@@ -239,13 +245,33 @@ public class Teacher extends User {
                         System.out.print("Это правильный ответ? (y/n): ");
                         boolean isCorrect = scanner.nextLine().equalsIgnoreCase("y");
 
-                        teacherDAO.addAnswerOption(testId, optionText, isCorrect);
+                        teacherDAO.addAnswerOption(questionId, optionText, isCorrect);
                     }
                 }
             }
+
+            connection.commit();
             System.out.println("Тест успешно создан!");
+
         } catch (SQLException e) {
-            System.out.println("Ошибка при создании теста: " + e.getMessage());
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                } catch (SQLException ex) {
+                    System.err.println("Ошибка при откате транзакции: " + ex.getMessage());
+                }
+            }
+            System.err.println("Ошибка при создании теста: " + e.getMessage());
+
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.setAutoCommit(true);
+                    connection.close();
+                } catch (SQLException e) {
+                    System.err.println("Ошибка при закрытии соединения: " + e.getMessage());
+                }
+            }
         }
     }
 

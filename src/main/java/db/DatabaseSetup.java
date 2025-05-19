@@ -50,7 +50,6 @@ public class DatabaseSetup {
                 createActivityLogsTable(dbStmt);
                 createTestAnswersTable(dbStmt);
                 createTextAnswerGradesTable(dbStmt);
-                createTestQuestionsTable(dbStmt);
 
                 updateUserTable(dbStmt);
                 updateTestTable(dbStmt);
@@ -123,9 +122,9 @@ public class DatabaseSetup {
         String questionsSql = "CREATE TABLE IF NOT EXISTS test_questions (" +
                 "id INT AUTO_INCREMENT PRIMARY KEY," +
                 "test_id INT NOT NULL," +
-                "question TEXT NOT NULL," +
-                "question_type VARCHAR(20) NOT NULL CHECK (question_type IN ('single_choice', 'multiple_choice', 'text_answer'))," +
-                "points INT DEFAULT 1," +
+                "question_text TEXT NOT NULL," +
+                "question_type VARCHAR(20) NOT NULL," +
+                "points INT NOT NULL," +
                 "FOREIGN KEY (test_id) REFERENCES tests(id) ON DELETE CASCADE" +
                 ")";
         executeStatement(stmt, questionsSql, "test_questions");
@@ -139,6 +138,8 @@ public class DatabaseSetup {
                 ")";
         executeStatement(stmt, optionsSql, "answer_options");
     }
+
+
 
     private static void createEnrollmentTable(Statement stmt) throws SQLException {
         String sql = "CREATE TABLE IF NOT EXISTS enrollments (" +
@@ -380,16 +381,5 @@ public class DatabaseSetup {
                 "FOREIGN KEY (graded_by) REFERENCES users(id)" +
                 ")";
         executeStatement(stmt, sql, "text_answer_grades");
-    }
-
-    private static void createTestQuestionsTable(Statement stmt) throws SQLException {
-        String sql = "CREATE TABLE IF NOT EXISTS test_questions ("
-                + "id INT AUTO_INCREMENT PRIMARY KEY,"
-                + "test_id INT NOT NULL,"
-                + "question_text TEXT NOT NULL,"
-                + "question_type VARCHAR(20) NOT NULL CHECK (question_type IN ('single_choice', 'multiple_choice', 'text_answer')),"
-                + "points INT DEFAULT 1,"
-                + "FOREIGN KEY (test_id) REFERENCES tests(id) ON DELETE CASCADE)";
-        executeStatement(stmt, sql, "test_questions");
     }
 }
