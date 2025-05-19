@@ -193,8 +193,7 @@ public class ManagerDAO {
                         rs.getString("teacher_name"),
                         rs.getBoolean("is_active")
                 ));
-            }
-        }
+            }}
         return courses;
     }
 }

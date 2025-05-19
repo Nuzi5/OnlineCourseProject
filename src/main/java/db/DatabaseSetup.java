@@ -392,5 +392,4 @@ public class DatabaseSetup {
                 + "FOREIGN KEY (test_id) REFERENCES tests(id) ON DELETE CASCADE)";
         executeStatement(stmt, sql, "test_questions");
     }
-
 }

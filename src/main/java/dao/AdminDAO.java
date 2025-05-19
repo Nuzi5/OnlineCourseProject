@@ -1,8 +1,7 @@
 package dao;
 
 import models.*;
-import models.additional.CourseWithTeacher;
-
+import models.additional.*;
 import java.sql.*;
 import java.util.*;
 
@@ -12,11 +11,8 @@ public class AdminDAO {
     public AdminDAO(Connection connection) {
         this.connection = connection;}
 
-    public boolean createCourse(String title,
-                                String description,
-                                int createdBy,
-                                int teacherId,
-                                boolean isActive) throws SQLException {
+    public boolean createCourse(String title, String description, int createdBy,
+                                int teacherId, boolean isActive) throws SQLException {
         Connection connection = this.connection;
         try {
             connection.setAutoCommit(false);
@@ -90,24 +86,6 @@ public class AdminDAO {
             stmt.setInt(1, courseId);
             return stmt.executeUpdate() > 0;
         }
-    }
-
-    public List<Course> getAllCourses() throws SQLException {
-        List<Course> courses = new ArrayList<>();
-        String sql = "SELECT id, title, description, created_by, is_active FROM courses";
-
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) {
-                courses.add(new Course(
-                        rs.getInt("id"),
-                        rs.getString("title"),
-                        rs.getString("description"),
-                        rs.getInt("created_by"),
-                        rs.getBoolean("is_active")
-                ));
-            }}
-        return courses;
     }
 
     public List<User> getAllUsers() throws SQLException {
@@ -251,4 +229,24 @@ public class AdminDAO {
         }
         return courses;
     }
+
+/*
+    public List<Course> getAllCourses() throws SQLException {
+        List<Course> courses = new ArrayList<>();
+        String sql = "SELECT id, title, description, created_by, is_active FROM courses";
+
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                courses.add(new Course(
+                        rs.getInt("id"),
+                        rs.getString("title"),
+                        rs.getString("description"),
+                        rs.getInt("created_by"),
+                        rs.getBoolean("is_active")
+                ));
+            }}
+        return courses;
+    }
+*/
 }

@@ -14,7 +14,5 @@ public class AnswerOption {
     }
 
     public int getId() { return id; }
-    public int getQuestionId() { return questionId; }
     public String getOptionText() { return optionText; }
-    public boolean isCorrect() { return isCorrect; }
 }

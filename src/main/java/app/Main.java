@@ -23,7 +23,7 @@ public class Main {
         }
     }
 
-    public static void initializeDatabaseAndDAOs() {
+    private static void initializeDatabaseAndDAOs() {
         try {
             Connection connection = DatabaseSetup.getConnection();
             userDAO = new UserDAO(connection);
@@ -33,9 +33,8 @@ public class Main {
         }
     }
 
-    public static void showMainMenu() {
+    private static void showMainMenu() {
         boolean isValidInput = false;
-
         while (!isValidInput) {
             try {
                 System.out.println("\n*** ОБРАЗОВАТЕЛЬНАЯ ПЛАТФОРМА ***");
@@ -69,8 +68,7 @@ public class Main {
 
     private static int readIntInput() {
         while (true) {
-            try {
-                return scanner.nextInt();
+            try { return scanner.nextInt();
             } catch (InputMismatchException e) {
                 System.out.println("Ошибка: введите число!");
                 scanner.nextLine();
@@ -106,15 +104,8 @@ public class Main {
         String password = scanner.nextLine();
 
         try {
-            int newId = userDAO.createUser(
-                    username,
-                    password,
-                    email,
-                    fullName,
-                    "STUDENT",
-                    true
-            );
-
+            int newId = userDAO.createUser(username, password, email,
+                    fullName, "STUDENT", true);
             System.out.println("Студент успешно зарегистрирован! ID: " + newId);
 
         } catch (SQLException e) {
@@ -126,13 +117,11 @@ public class Main {
                 } else if (e.getMessage().contains("email")) {
                     System.err.println("Email уже используется!");
                 }
-            }
-        }
+            }}
     }
 
     private static void showRoleMenu() {
         while (currentUser != null) {
             currentUser.showMenu();
-        }
-    }
+        }}
 }

@@ -353,11 +353,7 @@ public class Teacher extends User {
                 int score = scanner.nextInt();
                 scanner.nextLine();
 
-                teacherDAO.saveTextAnswerScore(
-                        answer.getAnswerId(),
-                        score,
-                        this.getId()
-                );
+                teacherDAO.saveTextAnswerScore(answer.getAnswerId(), score, this.getId());
                 System.out.println("Оценка сохранена!");
             }
 
